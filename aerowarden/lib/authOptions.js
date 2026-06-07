@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 
 import connectDB from "./mongodb";
 import User from "../models/users";
+import { isAdminEmail } from "./admin";
 
 export const authOptions = {
     pages: {
@@ -80,10 +81,15 @@ export const authOptions = {
                     }
                 );
 
+                const role = isAdminEmail(user.email)
+                    ? "admin"
+                    : user.role || "user";
+
                 return {
                     id: user._id.toString(),
                     name: user.name,
                     email: user.email,
+                    role,
                 };
             },
         }),
@@ -136,6 +142,10 @@ export const authOptions = {
                     email,
                 });
 
+            const role = isAdminEmail(email)
+                ? "admin"
+                : existingUser?.role || "user";
+
             if (!existingUser) {
 
                 await User.create({
@@ -144,6 +154,7 @@ export const authOptions = {
                     image:
                         user?.image ||
                         null,
+                    role,
                     lastLogin:
                         new Date(),
                 });
@@ -190,6 +201,9 @@ export const authOptions = {
                     token.name = dbUser.name;
                     token.email = dbUser.email;
                     token.image = dbUser.image;
+                    token.role = isAdminEmail(dbUser.email)
+                        ? "admin"
+                        : dbUser.role || "user";
                 }
             }
 
@@ -206,6 +220,7 @@ export const authOptions = {
                 session.user.name = token.name;
                 session.user.email = token.email;
                 session.user.image = token.image;
+                session.user.role = token.role || "user";
             }
 
             return session;

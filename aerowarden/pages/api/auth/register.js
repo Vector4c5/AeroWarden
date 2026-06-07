@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import connectDB from "../../../lib/mongodb";
 import User from "../../../models/users";
+import { isAdminEmail } from "../../../lib/admin";
 
 export default async function handler(req, res) {
 
@@ -37,10 +38,15 @@ export default async function handler(req, res) {
             12
         );
 
+        const normalizedEmail = email.toLowerCase();
+
         const user = await User.create({
             name,
-            email: email.toLowerCase(),
+            email: normalizedEmail,
             password: hashedPassword,
+            role: isAdminEmail(normalizedEmail)
+                ? "admin"
+                : "user",
         });
 
         return res.status(201).json({
