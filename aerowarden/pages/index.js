@@ -1,4 +1,5 @@
 import { signIn, signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
@@ -72,6 +73,8 @@ export default function Home() {
                   <img
                     src={session.user.image}
                     alt="Foto de perfil"
+                    width={80}
+                    height={80}
                     className="h-20 w-20 rounded-full border border-white/20"
                   />
                 )}
@@ -83,6 +86,13 @@ export default function Home() {
                 <p className="break-all text-sm text-slate-300">
                   Correo: {session.user?.email}
                 </p>
+
+                <Link
+                  href="/landing"
+                  className="inline-flex items-center justify-center rounded-full border border-cyan-400/40 bg-cyan-400/10 px-5 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-cyan-100"
+                >
+                  Ir a landing
+                </Link>
 
                 <details className="rounded-lg bg-slate-800 p-3 text-xs text-slate-300">
                   <summary className="cursor-pointer font-medium">
