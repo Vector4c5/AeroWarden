@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
@@ -175,6 +176,21 @@ export default function Landing() {
                     <p className="mt-4 text-sm text-slate-300">
                         Your ultimate flight management solution.
                     </p>
+
+                    {session && (
+
+                        <div className="mt-5">
+
+                            <Link
+                                href="/hangars"
+                                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                            >
+                                Ver hangares y aeronaves
+                            </Link>
+
+                        </div>
+
+                    )}
 
                     <div className="mt-8 space-y-8">
 
