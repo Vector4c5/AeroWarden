@@ -16,7 +16,6 @@ const emptyReportForm = {
 export default function HangarsPage() {
 
     const { data: session } = useSession();
-
     const [hangars, setHangars] = useState([]);
     const [aircraftByHangar, setAircraftByHangar] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -470,42 +469,29 @@ export default function HangarsPage() {
                                                                 </button>
 
                                                             </form>
-
                                                         )}
-
                                                     </article>
-
                                                 ))}
-
                                             </div>
-
                                         ) : (
-
                                             <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-slate-300">
                                                 Este hangar no tiene aeronaves todavía.
                                             </div>
-
                                         )}
 
                                     </div>
 
                                 </section>
-
                             );
                         })}
-
                     </div>
 
                 ) : (
-
                     <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-sm text-slate-300">
                         Aún no tienes hangares creados.
                     </div>
-
                 )}
-
             </main>
-
         </div>
     );
 }

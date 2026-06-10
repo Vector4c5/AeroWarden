@@ -161,13 +161,13 @@ export default function Landing() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-6">
 
             <Header />
 
-            <main className="mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-5xl items-center justify-center px-6 py-10">
+            <main className="w-full h-auto flex flex-col items-center justify-start">
 
-                <section className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.28)]">
+                <section className="w-full rounded-3xl border border-slate-200 bg-white">
 
                     <p className="text-sm uppercase tracking-[0.3em] text-cyan-700/80">
                         AeroWarden
@@ -189,7 +189,7 @@ export default function Landing() {
                                 href="/hangars"
                                     className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-950"
                             >
-                                Ver hangares y aeronaves
+                                Ver  hangares y aeronaves
                             </Link>
                         </div>
 
