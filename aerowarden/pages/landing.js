@@ -2,10 +2,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
+import Header from "@/Componets/common/Header";
+
 export default function Landing() {
 
     const { data: session } = useSession();
-    const isAdmin = session?.user?.role === "admin";
 
     const [hangars, setHangars] = useState([]);
     const [isLoadingHangars, setIsLoadingHangars] = useState(false);
@@ -160,23 +161,14 @@ export default function Landing() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-6">
 
-            <main className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-2xl items-center justify-center">
+            <Header />
 
-                <section className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+            <main className="w-full h-auto flex flex-col items-center justify-start">
 
-                    <p className="text-sm uppercase tracking-[0.3em] text-cyan-300/80">
-                        AeroWarden
-                    </p>
+                <section className="w-full rounded-3xl border border-slate-200 bg-white">
 
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                        Welcome to AeroWarden
-                    </h1>
-
-                    <p className="mt-4 text-sm text-slate-300">
-                        Your ultimate flight management solution.
-                    </p>
 
                     {session && (
 
@@ -184,22 +176,10 @@ export default function Landing() {
 
                             <Link
                                 href="/hangars"
-                                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-950"
                             >
-                                Ver hangares y aeronaves
+                                Ver  hangares y aeronaves
                             </Link>
-
-                            {isAdmin && (
-
-                                <Link
-                                    href="/admin/dashboard"
-                                    className="ml-3 inline-flex items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-400/20"
-                                >
-                                    Abrir dashboard
-                                </Link>
-
-                            )}
-
                         </div>
 
                     )}
@@ -217,7 +197,7 @@ export default function Landing() {
                                             !isFormOpen
                                         )
                                     }
-                                    className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-400/20"
+                                    className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100"
                                 >
                                     Nuevo hangar
                                     <span aria-hidden="true">
@@ -227,9 +207,9 @@ export default function Landing() {
 
                                 {isFormOpen && (
 
-                                    <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
 
-                                        <h2 className="mb-4 text-xl font-semibold">
+                                        <h2 className="mb-4 text-xl font-semibold text-slate-950">
                                             Crear Hangar
                                         </h2>
 
@@ -249,7 +229,7 @@ export default function Landing() {
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3 text-white outline-none transition focus:border-cyan-400"
+                                                className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
                                                 required
                                             />
 
@@ -262,14 +242,14 @@ export default function Landing() {
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full rounded-lg border border-slate-700 bg-slate-900 p-3 text-white outline-none transition focus:border-cyan-400"
+                                                className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
                                                 required
                                             />
 
                                             <button
                                                 type="submit"
                                                 disabled={isCreatingHangar}
-                                                className="rounded-lg bg-cyan-500 px-4 py-2 font-medium text-black transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-70"
+                                                className="rounded-lg bg-slate-950 px-4 py-2 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
                                             >
                                                 {isCreatingHangar
                                                     ? "Creando..."
@@ -290,13 +270,13 @@ export default function Landing() {
 
                             <div className="mb-4 flex items-center justify-between gap-4">
 
-                                <h2 className="text-xl font-semibold text-white">
+                                <h2 className="text-xl font-semibold text-slate-950">
                                     Tus hangares
                                 </h2>
 
                                 {session && isLoadingHangars && (
 
-                                    <span className="text-sm text-slate-400">
+                                    <span className="text-sm text-slate-500">
                                         Cargando...
                                     </span>
 
@@ -314,18 +294,18 @@ export default function Landing() {
 
                                             <article
                                                 key={hangar._id}
-                                                className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 shadow-lg shadow-black/20"
+                                                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]"
                                             >
 
-                                                <p className="text-xs uppercase tracking-[0.24em] text-cyan-300/80">
+                                                <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80">
                                                     Hangar
                                                 </p>
 
-                                                <h3 className="mt-2 text-lg font-semibold text-white">
+                                                <h3 className="mt-2 text-lg font-semibold text-slate-950">
                                                     {hangar.name}
                                                 </h3>
 
-                                                <p className="mt-2 text-sm text-slate-300">
+                                                <p className="mt-2 text-sm text-slate-600">
                                                     {hangar.location ||
                                                         "Sin ubicación"}
                                                 </p>
@@ -341,7 +321,7 @@ export default function Landing() {
                                                         deletingHangarId ===
                                                         hangar._id
                                                     }
-                                                    className="mt-4 rounded-full border border-rose-400/30 bg-rose-400/10 px-3 py-1.5 text-sm font-medium text-rose-200 transition hover:bg-rose-400/20 disabled:cursor-not-allowed disabled:opacity-70"
+                                                    className="mt-4 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
                                                 >
                                                     {deletingHangarId ===
                                                     hangar._id
@@ -357,7 +337,7 @@ export default function Landing() {
 
                                 ) : (
 
-                                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-slate-300">
+                                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
                                         Aún no tienes hangares creados.
                                     </div>
 
@@ -365,7 +345,7 @@ export default function Landing() {
 
                             ) : (
 
-                                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-slate-300">
+                                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
                                     Inicia sesión para ver y crear tus hangares.
                                 </div>
 
@@ -375,7 +355,7 @@ export default function Landing() {
 
                         {message && (
 
-                            <p className="text-sm text-cyan-300">
+                            <p className="text-sm text-cyan-700">
                                 {message}
                             </p>
 
