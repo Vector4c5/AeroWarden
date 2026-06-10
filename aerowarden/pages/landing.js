@@ -7,7 +7,6 @@ import Header from "@/Componets/common/Header";
 export default function Landing() {
 
     const { data: session } = useSession();
-    const isAdmin = session?.user?.role === "admin";
 
     const [hangars, setHangars] = useState([]);
     const [isLoadingHangars, setIsLoadingHangars] = useState(false);
@@ -192,18 +191,6 @@ export default function Landing() {
                             >
                                 Ver hangares y aeronaves
                             </Link>
-
-                            {isAdmin && (
-
-                                <Link
-                                    href="/admin/dashboard"
-                                    className="ml-3 inline-flex items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100"
-                                >
-                                    Abrir dashboard
-                                </Link>
-
-                            )}
-
                         </div>
 
                     )}

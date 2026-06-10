@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react";
 export default function Header() {
     const router = useRouter();
     const { data: session, status } = useSession();
+    const isAdmin = session?.user?.role === "admin";
+
 
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef(null);
@@ -58,6 +60,12 @@ export default function Header() {
 
                         <div className="flex items-center gap-4">
                             <Link
+                                href="/"
+                                className="text-sm font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
+                            >
+                                Inicio
+                            </Link>
+                            <Link
                                 href="/hangars"
                                 className="text-sm font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
@@ -96,11 +104,10 @@ export default function Header() {
                                         "Usuario"}
 
                                     <svg
-                                        className={`h-4 w-4 transition ${
-                                            menuOpen
-                                                ? "rotate-180"
-                                                : ""
-                                        }`}
+                                        className={`h-4 w-4 transition ${menuOpen
+                                            ? "rotate-180"
+                                            : ""
+                                            }`}
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -129,6 +136,15 @@ export default function Header() {
                                         >
                                             Perfil
                                         </Link>
+                                        {isAdmin && (
+
+                                            <Link
+                                                href="/admin/dashboard"
+                                                className="block px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"                                            >
+                                                Panel Administrador
+                                            </Link>
+
+                                        )}
 
                                         <button
                                             onClick={() =>
@@ -151,7 +167,7 @@ export default function Header() {
 
                     ) : (
 
-                       <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4">
                             <Link
                                 href="/"
                                 className="text-sm font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
@@ -191,7 +207,7 @@ export default function Header() {
                                 className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-70"
                             >
                                 {status ===
-                                "loading"
+                                    "loading"
                                     ? "Cargando..."
                                     : "Iniciar sesión"}
                             </button>
