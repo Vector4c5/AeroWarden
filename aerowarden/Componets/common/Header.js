@@ -61,12 +61,12 @@ export default function Header() {
                         <div className="flex items-center gap-4">
                             <Link
                                 href="/"
-                                className="text-md font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
+                                className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
                                 Inicio
                             </Link>
                             <Link
-                               href="/hangars"
+                               href="/landing"
                                 className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
                                 Hangares
@@ -98,7 +98,7 @@ export default function Header() {
                                             !menuOpen
                                         )
                                     }
-                                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-lg font-medium text-black transition hover:bg-slate-100"
                                 >
                                     {session.user?.name ||
                                         "Usuario"}

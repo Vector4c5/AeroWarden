@@ -169,17 +169,6 @@ export default function Landing() {
 
                 <section className="w-full rounded-3xl border border-slate-200 bg-white">
 
-                    <p className="text-sm uppercase tracking-[0.3em] text-cyan-700/80">
-                        AeroWarden
-                    </p>
-
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                        Welcome to AeroWarden
-                    </h1>
-
-                    <p className="mt-4 max-w-2xl text-sm text-slate-600 sm:text-base">
-                        Your ultimate flight management solution.
-                    </p>
 
                     {session && (
 

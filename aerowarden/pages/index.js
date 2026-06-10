@@ -325,35 +325,24 @@ export default function Home() {
                     className="w-full h-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 gap-1 shadow-sm 
                             transition hover:-translate-y-1 hover:shadow-md"
                 >
-
                     <div>
-
                         <p className="font-medium text-slate-800">
                             {task}
                         </p>
-
                         <p className="text-sm text-slate-500">
                             Pendiente
                         </p>
 
                     </div>
-
                     <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                         Pendiente
                     </span>
-
                 </div>
-
             ))}
-
         </div>
-
     </section>
-
         </div>
-
     </section>
-
 </main>
 
       ) : (
