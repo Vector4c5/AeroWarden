@@ -1,7 +1,10 @@
-import { signIn, signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+
+import Header from "@/Componets/common/Header";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -35,29 +38,31 @@ export default function Home() {
   }, [session, authError, router]);
 
   return (
-    <div className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-      <main className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-md items-center justify-center">
-        <section className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+    <div className="min-h-screen bg-slate-50 text-black">
+      <Header />
 
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300/80">
+      <main className="mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-4xl items-start justify-center px-6 py-10">
+        <section className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-32px_rgba(15,23,42,0.28)]">
+
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-700/80">
             AeroWarden
           </p>
 
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
             Login con Google
           </h1>
 
-          <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/70 p-5">
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
 
             {errorMessage && (
-              <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 {errorMessage}
               </div>
             )}
 
             {status === "loading" ? (
 
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-500">
                 Cargando sesión...
               </p>
 
@@ -65,36 +70,26 @@ export default function Home() {
 
               <div className="space-y-4">
 
-                <p className="text-lg font-medium text-emerald-300">
+                <p className="text-lg font-medium text-emerald-700">
                   Has iniciado sesión correctamente
                 </p>
 
-                {session.user?.image && (
-                  <img
-                    src={session.user.image}
-                    alt="Foto de perfil"
-                    width={80}
-                    height={80}
-                    className="h-20 w-20 rounded-full border border-white/20"
-                  />
-                )}
-
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-slate-600">
                   Nombre: {session.user?.name}
                 </p>
 
-                <p className="break-all text-sm text-slate-300">
+                <p className="break-all text-sm text-slate-600">
                   Correo: {session.user?.email}
                 </p>
 
                 <Link
                   href="/landing"
-                  className="inline-flex items-center justify-center rounded-full border border-cyan-400/40 bg-cyan-400/10 px-5 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20 hover:text-cyan-100"
+                  className="inline-flex items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 px-5 py-2 text-sm font-semibold text-cyan-900 transition hover:bg-cyan-100"
                 >
                   Ir a landing
                 </Link>
 
-                <details className="rounded-lg bg-slate-800 p-3 text-xs text-slate-300">
+                <details className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-500">
                   <summary className="cursor-pointer font-medium">
                     Ver datos de sesión
                   </summary>
@@ -104,35 +99,15 @@ export default function Home() {
                   </pre>
                 </details>
 
-                <button
-                  type="button"
-                  onClick={() => signOut()}
-                  className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
-                >
-                  Cerrar sesión
-                </button>
-
               </div>
 
             ) : (
 
               <div className="space-y-4">
 
-                <p className="text-sm text-slate-300">
-                  Presiona para iniciar sesión con Google.
+                <p className="text-sm text-slate-600">
+                  Usa el botón del encabezado para iniciar sesión con Google.
                 </p>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    signIn("google", {
-                      callbackUrl: "/",
-                    })
-                  }
-                  className="inline-flex w-full items-center justify-center rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-                >
-                  Iniciar sesión con Google
-                </button>
 
               </div>
 
