@@ -14,7 +14,7 @@ const emptyReportForm = {
 };
 
 export default function HangarsPage() {
-
+ 
     const { data: session } = useSession();
     const [hangars, setHangars] = useState([]);
     const [aircraftByHangar, setAircraftByHangar] = useState({});

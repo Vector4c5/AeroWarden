@@ -172,7 +172,7 @@ export default function Home() {
 
             <Link
                 href="/hangars"
-                className="flex items-center gap-2 text-sm font-semibold text-cyan-600 transition hover:text-cyan-700"
+                className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
             >
                 Ver todos
 
@@ -202,7 +202,7 @@ export default function Home() {
 
         ) : hangars.length > 0 ? (
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="w-full flex flex-col justify-start items-center gap-3 p-2">
 
                 {hangars
                     .slice(0, 3)
@@ -210,18 +210,19 @@ export default function Home() {
 
                         <div
                             key={hangar._id}
-                            className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                            className="w-full h-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 gap-1 shadow-sm 
+                            transition hover:-translate-y-1 hover:shadow-md"
                         >
 
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-600">
+                            <p className="text-xs font-semibold uppercase text-cyan-600">
                                 Hangar
                             </p>
 
-                            <h3 className="mt-3 text-xl font-bold text-slate-900">
+                            <h3 className="text-xl font-bold text-slate-900">
                                 {hangar.name}
                             </h3>
 
-                            <p className="mt-2 text-sm text-slate-500">
+                            <p className=" text-sm text-slate-500">
                                 {hangar.location || "Ubicación no especificada"}
                             </p>
 
@@ -287,7 +288,7 @@ export default function Home() {
 
             <Link
                 href="/pending"
-                className="flex items-center gap-2 text-sm font-semibold text-cyan-600 transition hover:text-cyan-700"
+               className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
             >
                 Ver todos
 
@@ -321,7 +322,8 @@ export default function Home() {
 
                 <div
                     key={index}
-                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 transition hover:bg-slate-100"
+                    className="w-full h-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 gap-1 shadow-sm 
+                            transition hover:-translate-y-1 hover:shadow-md"
                 >
 
                     <div>
