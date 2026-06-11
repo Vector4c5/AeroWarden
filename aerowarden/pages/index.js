@@ -351,17 +351,17 @@ export default function Home() {
         <main>
 
           {/* Hero Section */}
-          <section className="relative bg-black h-200 overflow-hidden">
+          <section className="relative bg-black h-125 overflow-hidden">
 
             <img
               src="/hang.aeronave_2.jpg"
               alt="AeroWarden"
               fill
               priority
-              className="object-cover opacity-40"
+              className="h-full w-full object-cover opacity-40"
             />
 
-            <div className="absolute inset-0 flex flex-col items-start justify-center text-white px-10 py-16">
+            <div className="absolute inset-0 flex flex-col items-start justify-end text-white px-10 py-16">
 
               <h1 className="mb-6 text-5xl font-bold md:text-7xl">
 

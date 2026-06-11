@@ -16,60 +16,47 @@ export default function Landing() {
     const [name, setName] = useState("");
     const [location, setLocation] = useState("");
     const [message, setMessage] = useState("");
+    const [isJoinOpen, setIsJoinOpen] = useState(false);
+    const [inviteCode, setInviteCode] = useState("");
+    const [isJoining, setIsJoining] = useState(false);
 
     useEffect(() => {
 
         if (!session) {
             return;
         }
-
         const loadHangars = async () => {
-
             setIsLoadingHangars(true);
-
             try {
-
                 const response = await fetch(
                     "/api/hangars"
                 );
-
                 const data = await response.json();
-
                 if (!response.ok) {
                     throw new Error(
                         data.error ||
                         "Error al cargar hangares"
                     );
                 }
-
                 setHangars(data);
-
             } catch (error) {
-
                 setMessage(error.message);
-
             } finally {
                 setIsLoadingHangars(false);
             }
         };
-
         loadHangars();
-
     }, [session]);
 
     const handleDeleteHangar = async (hangarId) => {
-
         setDeletingHangarId(hangarId);
-
         try {
-
             const response = await fetch(
                 `/api/hangars?id=${hangarId}`,
                 {
                     method: "DELETE",
                 }
             );
-
             const data = await response.json();
 
             if (!response.ok) {
@@ -78,24 +65,19 @@ export default function Landing() {
                     "Error al borrar hangar"
                 );
             }
-
             setHangars((currentHangars) =>
                 currentHangars.filter((hangar) =>
                     hangar._id !== hangarId
                 )
             );
-
             setMessage(data.message || "Hangar eliminado correctamente");
 
         } catch (error) {
-
             setMessage(error.message);
-
         } finally {
             setDeletingHangarId(null);
         }
     };
-
     const handleCreateHangar = async (e) => {
 
         e.preventDefault();
@@ -159,6 +141,47 @@ export default function Landing() {
             setIsCreatingHangar(false);
         }
     };
+    const handleJoinHangar = async (e) => {
+
+        e.preventDefault();
+
+        setIsJoining(true);
+
+        try {
+            const response = await fetch(
+                "/api/hangars/join",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        inviteCode,
+                    }),
+                }
+            );
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(
+                    data.error ||
+                    "Error al unirse al hangar"
+                );
+            }
+            setHangars((current) => [
+                ...current,
+                data,
+            ]);
+            setMessage(
+                `Te has unido a "${data.name}"`
+            );
+            setInviteCode("");
+            setIsJoinOpen(false);
+        } catch (error) {
+            setMessage(error.message);
+        } finally {
+            setIsJoining(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-6">
@@ -176,7 +199,7 @@ export default function Landing() {
 
                             <Link
                                 href="/hangars"
-                                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-950"
+                                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-950"
                             >
                                 Ver  hangares y aeronaves
                             </Link>
@@ -202,6 +225,21 @@ export default function Landing() {
                                     Nuevo hangar
                                     <span aria-hidden="true">
                                         {isFormOpen ? "−" : "+"}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setIsJoinOpen(
+                                            !isJoinOpen
+                                        )
+                                    }
+                                    className="ml-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100"
+                                >
+                                    Unirse a hangar
+
+                                    <span>
+                                        {isJoinOpen ? "−" : "+"}
                                     </span>
                                 </button>
 
@@ -261,6 +299,48 @@ export default function Landing() {
                                     </div>
 
                                 )}
+                                {isJoinOpen && (
+
+                                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+
+                                        <h2 className="mb-4 text-xl font-semibold text-slate-950">
+                                            Unirse a un Hangar
+                                        </h2>
+
+                                        <form
+                                            onSubmit={handleJoinHangar}
+                                            className="space-y-4"
+                                        >
+
+                                            <input
+                                                type="text"
+                                                placeholder="Código de invitación"
+                                                value={inviteCode}
+                                                onChange={(e) =>
+                                                    setInviteCode(
+                                                        e.target.value
+                                                            .toUpperCase()
+                                                    )
+                                                }
+                                                className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-emerald-400"
+                                                required
+                                            />
+
+                                            <button
+                                                type="submit"
+                                                disabled={isJoining}
+                                                className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-70"
+                                            >
+                                                {isJoining
+                                                    ? "Uniéndose..."
+                                                    : "Unirse"}
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                )}
 
                             </div>
 
@@ -304,6 +384,50 @@ export default function Landing() {
                                                 <h3 className="mt-2 text-lg font-semibold text-slate-950">
                                                     {hangar.name}
                                                 </h3>
+                                                {hangar.isOwner && (
+
+                                                    <div className="mt-4 rounded-lg bg-slate-100 p-3">
+
+                                                        <p className="text-xs text-slate-500">
+                                                            Código de invitación
+                                                        </p>
+
+                                                        <div className="mt-2 flex items-center justify-between">
+
+                                                            <code className="font-mono font-bold">
+                                                                {hangar.inviteCode}
+                                                            </code>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(
+                                                                        hangar.inviteCode
+                                                                    );
+
+                                                                    setMessage(
+                                                                        "Código copiado"
+                                                                    );
+                                                                }}
+                                                                className="text-sm text-cyan-700 hover:underline"
+                                                            >
+                                                                Copiar
+                                                            </button>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                )}
+                                                <p
+                                                    className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-medium ${hangar.isOwner
+                                                        ? "bg-cyan-100 text-cyan-700"
+                                                        : "bg-amber-100 text-amber-700"
+                                                        }`}
+                                                >
+                                                    {hangar.isOwner
+                                                        ? "Propietario"
+                                                        : "Miembro"}
+                                                </p>
 
                                                 <p className="mt-2 text-sm text-slate-600">
                                                     {hangar.location ||
@@ -324,7 +448,7 @@ export default function Landing() {
                                                     className="mt-4 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
                                                 >
                                                     {deletingHangarId ===
-                                                    hangar._id
+                                                        hangar._id
                                                         ? "Borrando..."
                                                         : "Borrar hangar"}
                                                 </button>

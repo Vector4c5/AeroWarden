@@ -17,6 +17,37 @@ const HangarSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
+
+        inviteCode: {
+            type: String,
+            unique: true,
+            required: true,
+        },
+
+        members: [
+            {
+                user: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+
+                role: {
+                    type: String,
+                    enum: [
+                        "admin",
+                        "engineer",
+                        "technician",
+                    ],
+                    default: "technician",
+                },
+
+                joinedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
     },
     {
         timestamps: true,
@@ -24,4 +55,7 @@ const HangarSchema = new mongoose.Schema(
 );
 
 export default mongoose.models.Hangar ||
-    mongoose.model("Hangar", HangarSchema);
+    mongoose.model(
+        "Hangar",
+        HangarSchema
+    );
