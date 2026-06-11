@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 import Header from "@/Componets/common/Header";
 
@@ -393,12 +393,13 @@ export default function Home() {
 
               <p className="leading-8 text-slate-600">
 
-                AeroWarden es una plataforma desarrollada para
-                modernizar la administración de hangares
-                aeronáuticos mediante herramientas digitales que
-                simplifican el seguimiento de aeronaves,
-                la gestión de trabajos y la generación de
-                reportes operativos.
+                AeroWarden es una plataforma diseñada para optimizar 
+                las operaciones de hangares aeronáuticos mediante 
+                la gestión digital de aeronaves, el seguimiento 
+                de trabajos de mantenimiento y la generación de reportes 
+                operativos. Centraliza la información en un solo entorno, 
+                reduciendo procesos manuales y mejorando el control, 
+                la trazabilidad y la eficiencia de las operaciones.
 
               </p>
 
@@ -502,24 +503,75 @@ export default function Home() {
 
             </section>
 
-            {/* Sección final */}
+            {/* Flujo del proceso */}
             <section className="rounded-3xl bg-slate-900 p-12 text-center text-white shadow-xl">
 
               <h2 className="mb-6 text-4xl font-bold">
 
-                La administración aeronáutica del futuro
+                Flujo de proceso de AeroWarden
 
               </h2>
 
               <p className="mx-auto max-w-4xl text-lg leading-8 text-slate-300">
 
-                Centraliza la información de hangares,
-                aeronaves y procesos operativos en un solo
-                lugar para mejorar la eficiencia,
-                reducir errores y mantener un control
-                completo sobre cada operación.
+                Un recorrido horizontal que muestra cómo AeroWarden gestiona hangares, aeronaves y operaciones.
 
               </p>
+
+              <div className="mt-10 flex flex-col items-center gap-6 text-left md:flex-row md:justify-center md:space-x-4">
+                <div className="w-full rounded-3xl border border-slate-700 bg-slate-800 p-6 text-white md:w-72">
+                  <p className="text-sm uppercase tracking-widest text-cyan-300">Paso 1</p>
+                  <h3 className="mt-3 text-xl font-semibold">Registro y acceso</h3>
+                  <p className="mt-2 text-sm text-slate-300">Crea tu cuenta y accede a tu espacio aeronáutico.</p>
+                </div>
+
+                <div className="hidden md:flex items-center text-3xl text-cyan-300">→</div>
+
+                <div className="w-full rounded-3xl border border-slate-700 bg-slate-800 p-6 text-white md:w-72">
+                  <p className="text-sm uppercase tracking-widest text-cyan-300">Paso 2</p>
+                  <h3 className="mt-3 text-xl font-semibold">Configura hangares</h3>
+                  <p className="mt-2 text-sm text-slate-300">Registra tus hangares y define su ubicación.</p>
+                </div>
+
+                <div className="hidden md:flex items-center text-3xl text-cyan-300">→</div>
+
+                <div className="w-full rounded-3xl border border-slate-700 bg-slate-800 p-6 text-white md:w-72">
+                  <p className="text-sm uppercase tracking-widest text-cyan-300">Paso 3</p>
+                  <h3 className="mt-3 text-xl font-semibold">Administra aeronaves</h3>
+                  <p className="mt-2 text-sm text-slate-300">Almacena datos de aeronaves y lleva su historial completo.</p>
+                </div>
+
+                <div className="hidden md:flex items-center text-3xl text-cyan-300">→</div>
+
+                <div className="w-full rounded-3xl border border-slate-700 bg-slate-800 p-6 text-white md:w-72">
+                  <p className="text-sm uppercase tracking-widest text-cyan-300">Paso 4</p>
+                  <h3 className="mt-3 text-xl font-semibold">Monitorea operaciones</h3>
+                  <p className="mt-2 text-sm text-slate-300">Supervisa trabajos, mantenimiento y reportes desde un panel central.</p>
+                </div>
+              </div>
+
+            </section>
+            <section className="rounded-3xl bg-slate-900 p-12 text-center text-white shadow-xl">
+
+              <h2 className="mb-6 text-4xl font-bold">
+
+                Comienza ahora con AeroWarden
+
+              </h2>
+
+              <p className="mx-auto max-w-4xl text-lg leading-8 text-slate-300">
+
+                Inicia tu aventura en la gestión aeronáutica con una plataforma segura, moderna y fácil de usar.
+
+              </p>
+
+              <button
+                type="button"
+                onClick={() => signIn()}
+                className="mt-8 inline-flex rounded-full bg-cyan-500 px-8 py-4 text-base font-semibold text-slate-900 transition hover:bg-cyan-400"
+              >
+                Regístrate
+              </button>
 
             </section>
 
