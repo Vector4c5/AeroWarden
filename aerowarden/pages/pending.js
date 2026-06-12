@@ -92,10 +92,10 @@ export default function PendingPage() {
     }, [session]);
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
             <Header />
 
-            <main className="mx-auto w-full max-w-4xl px-6 py-10">
+            <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
                 <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                     <Link
                         href="/"
@@ -109,10 +109,10 @@ export default function PendingPage() {
                     </span>
                 </div>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
+                <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
                     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                            <h1 className="text-3xl font-semibold text-slate-950">
+                        <div className="min-w-0">
+                            <h1 className="text-2xl font-semibold text-slate-950 sm:text-3xl">
                                 Pendientes
                             </h1>
                             <p className="mt-2 text-sm text-slate-500">
@@ -170,7 +170,7 @@ export default function PendingPage() {
                                 <li key={task.taskId}>
                                     <Link
                                         href={`/hangars/${task.hangarId}/aircraft/${task.aircraftId}`}
-                                        className="group flex w-full items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 hover:shadow-md"
+                                        className="group flex w-full flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 hover:shadow-md sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                                     >
                                         <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">

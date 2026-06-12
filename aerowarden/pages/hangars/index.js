@@ -372,16 +372,16 @@ export default function HangarsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
             <Header />
 
-            <main className="mx-auto w-full max-w-7xl px-6 py-10">
-                <div className="mb-8">
-                    <p className="text-sm uppercase tracking-[0.3em] text-cyan-700/80">
+            <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+                <div className="mb-6 sm:mb-8">
+                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80 sm:text-sm sm:tracking-[0.3em]">
                         AeroWarden
                     </p>
 
-                    <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">
                         Mis hangares
                     </h1>
 
@@ -397,28 +397,30 @@ export default function HangarsPage() {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsJoinOpen(false);
-                                    setIsFormOpen(true);
-                                }}
-                                className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100"
-                            >
-                                Nuevo hangar
-                            </button>
+                        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
+                            <div className="flex flex-wrap gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsJoinOpen(false);
+                                        setIsFormOpen(true);
+                                    }}
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100 sm:w-auto"
+                                >
+                                    Nuevo hangar
+                                </button>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsFormOpen(false);
-                                    setIsJoinOpen(true);
-                                }}
-                                className="ml-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100"
-                            >
-                                Unirse a hangar
-                            </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsFormOpen(false);
+                                        setIsJoinOpen(true);
+                                    }}
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100 sm:w-auto"
+                                >
+                                    Unirse a hangar
+                                </button>
+                            </div>
                         </div>
 
                         {isFormOpen && (

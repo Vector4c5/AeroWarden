@@ -2,15 +2,15 @@ import Header from "@/Componets/common/Header";
 
 export default function conocenos() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 pb-10 text-slate-900">
       <Header />
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="mb-10 text-center text-4xl font-bold text-slate-900"><strong>Conócenos</strong></h1>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+        <h1 className="mb-6 text-center text-2xl font-bold text-slate-900 sm:mb-10 sm:text-4xl"><strong>Conócenos</strong></h1>
 
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Nuestra misión</h2>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
+            <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:text-3xl">Nuestra misión</h2>
             <img
               src="/images/mision.jpg"
               className="mb-5 h-44 w-full rounded-2xl object-cover"
@@ -24,8 +24,8 @@ export default function conocenos() {
             </p>
           </article>
 
-          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Nuestra visión</h2>
+          <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
+            <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:text-3xl">Nuestra visión</h2>
             <img
               src="/hang-aeronave.png"
               className="mb-5 h-44 w-full rounded-2xl object-cover"
@@ -37,8 +37,8 @@ export default function conocenos() {
             </p>
           </article>
 
-          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">¿Por qué AeroWarden?</h2>
+          <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
+            <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:text-3xl">¿Por qué AeroWarden?</h2>
             <img
               src="/images/porque.jpg"
               className="mb-5 h-44 w-full rounded-2xl object-cover"
@@ -52,8 +52,8 @@ export default function conocenos() {
             </p>
           </article>
           
-          <article className="md:col-span-3 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg text-center">
-            <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Contáctanos</h2>
+          <article className="rounded-3xl border border-slate-200 bg-white p-4 text-center shadow-lg sm:p-6 lg:col-span-3">
+            <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:text-3xl">Contáctanos</h2>
             <img
               src="/images/contacto.jpg"
               className="mb-5 h-44 w-full rounded-2xl object-cover"
