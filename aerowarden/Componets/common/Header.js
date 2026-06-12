@@ -66,7 +66,7 @@ export default function Header() {
                                 Inicio
                             </Link>
                             <Link
-                               href="/landing"
+                                href="/hangars"
                                 className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
                                 Hangares
@@ -79,14 +79,8 @@ export default function Header() {
                                 Pendientes
                             </Link>
 
-                            <Link
-                                href="/reports"
-                                className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
-                            >
-                                Reportes
-                            </Link>
-
-                            {/* Usuario */}
+                    
+                              {/* Usuario */}
                             <div
                                 className="relative"
                                 ref={menuRef}
@@ -176,17 +170,10 @@ export default function Header() {
                             </Link>
 
                             <Link
-                                href="/how-it-works"
+                                href="/conocenos"
                                 className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
-                                Cómo funciona
-                            </Link>
-
-                            <Link
-                                href="/contact"
-                                className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
-                            >
-                                Contáctanos
+                                Conócenos
                             </Link>
 
                             <button
