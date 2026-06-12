@@ -10,7 +10,7 @@ import {
 } from "@/lib/adminDashboard";
 
 const cardClass =
-    "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg";
+    "min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6";
 
 function StatCard({ label, value, hint, accentClass }) {
     return (
@@ -186,10 +186,10 @@ export default function AdminDashboardPage() {
     const timelineDays = dashboard?.timelines?.days || 30;
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900">
+        <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
             <Header />
 
-            <main className="mx-auto w-full max-w-7xl px-6 py-10">
+            <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
                 <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                     <Link
                         href="/"

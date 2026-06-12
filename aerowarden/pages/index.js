@@ -141,12 +141,12 @@ export default function Home() {
   }, [session, hangars]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-black">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 text-black">
 
       <Header />
 
       {errorMessage && (
-        <div className="mx-auto mt-6 max-w-6xl px-6">
+        <div className="mx-auto mt-4 max-w-6xl px-4 sm:mt-6 sm:px-6">
 
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
 
@@ -160,7 +160,7 @@ export default function Home() {
       {status ===
         "loading" ? (
 
-        <main className="flex min-h-[60vh] items-center justify-center">
+        <main className="flex min-h-[50vh] items-center justify-center px-4 sm:min-h-[60vh]">
 
           <p className="text-slate-500">
             Cargando sesión...
@@ -174,25 +174,23 @@ export default function Home() {
         <main>
 
           {/* Hero Section */}
-          <section className="relative bg-black h-125 overflow-hidden">
+          <section className="relative min-h-[280px] overflow-hidden bg-black sm:min-h-[360px] md:min-h-[420px] lg:min-h-[500px]">
 
             <img
               src="/hang_aeronave_2.jpg"
               alt="AeroWarden"
-              fill
-              priority
-              className="h-full w-full object-cover opacity-40"
+              className="absolute inset-0 h-full w-full object-cover opacity-40"
             />
 
-            <div className="absolute inset-0 flex flex-col items-start justify-end text-white px-10 py-16">
+            <div className="absolute inset-0 flex flex-col items-start justify-end px-4 py-10 text-white sm:px-6 sm:py-12 md:px-10 md:py-16">
 
-              <h1 className="mb-6 text-5xl font-bold md:text-7xl">
+              <h1 className="mb-4 max-w-4xl text-3xl font-bold sm:mb-6 sm:text-4xl md:text-5xl lg:text-7xl">
 
                 Bienvenido a AeroWarden
 
               </h1>
 
-              <p className="max-w-3xl text-lg text-slate-200 md:text-2xl">
+              <p className="max-w-3xl text-base leading-relaxed text-slate-200 sm:text-lg md:text-xl lg:text-2xl">
 
                 Plataforma web para la gestión de hangares,
                 aeronaves y operaciones de mantenimiento aeronáutico.
@@ -203,19 +201,19 @@ export default function Home() {
 
           </section>
 
-          <section className="mx-auto max-w-7xl px-6 py-12">
+          <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
 
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
 
               {/* Mis hangares */}
               {/* Hangares */}
-              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
+              <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6 lg:p-8">
 
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
                   <div>
 
-                    <h2 className="text-2xl font-bold text-slate-900">
+                    <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
                       Tus hangares
                     </h2>
 
@@ -227,7 +225,7 @@ export default function Home() {
 
                   <Link
                     href="/hangars"
-                    className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
+                    className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg px-3 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 sm:py-3"
                   >
                     Ver todos
 
@@ -267,15 +265,15 @@ export default function Home() {
                         className="group w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:bg-cyan-50 hover:shadow-md"
                       >
 
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
-                          <div>
+                          <div className="min-w-0">
 
                             <p className="text-xs font-semibold uppercase text-cyan-600">
                               Hangar
                             </p>
 
-                            <h3 className="text-xl font-bold text-slate-900 group-hover:text-cyan-900">
+                            <h3 className="break-words text-lg font-bold text-slate-900 group-hover:text-cyan-900 sm:text-xl">
                               {hangar.name}
                             </h3>
 
@@ -291,7 +289,7 @@ export default function Home() {
 
                           </div>
 
-                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 transition group-hover:bg-cyan-100 group-hover:text-cyan-800">
+                          <span className="self-start rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 transition group-hover:bg-cyan-100 group-hover:text-cyan-800 sm:shrink-0">
                             Ir al hangar
                           </span>
 
@@ -341,13 +339,13 @@ export default function Home() {
 
 
               {/* Pendientes */}
-              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
+              <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6 lg:p-8">
 
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
                   <div>
 
-                    <h2 className="text-2xl font-bold text-slate-900">
+                    <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
                       Pendientes
                     </h2>
 
@@ -359,7 +357,7 @@ export default function Home() {
 
                   <Link
                     href="/pending"
-                    className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
+                    className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg px-3 py-2 text-sm font-semibold text-black transition hover:bg-slate-100 sm:py-3"
                   >
                     Ver todos
 
@@ -396,16 +394,16 @@ export default function Home() {
                       <Link
                         key={`${task.aircraftId}-${task.title}`}
                         href={`/hangars/${task.hangarId}/aircraft/${task.aircraftId}`}
-                        className="group flex w-full items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50 hover:shadow-md"
+                        className="group flex w-full flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50 hover:shadow-md sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                       >
 
-                        <div>
+                        <div className="min-w-0">
 
                           <p className="font-medium text-slate-800 group-hover:text-amber-900">
                             {task.title}
                           </p>
 
-                          <p className="mt-1 text-sm text-slate-500">
+                          <p className="mt-1 break-words text-sm text-slate-500">
                             {task.taskType}
                             {" · "}
                             {task.registration}
@@ -474,25 +472,23 @@ export default function Home() {
         <main>
 
           {/* Hero Section */}
-          <section className="relative bg-black h-125 overflow-hidden">
+          <section className="relative min-h-[280px] overflow-hidden bg-black sm:min-h-[360px] md:min-h-[420px] lg:min-h-[500px]">
 
             <img
               src="/hang_aeronave_2.jpg"
               alt="AeroWarden"
-              fill
-              priority
-              className="h-full w-full object-cover opacity-40"
+              className="absolute inset-0 h-full w-full object-cover opacity-40"
             />
 
-            <div className="absolute inset-0 flex flex-col items-start justify-end text-white px-10 py-16">
+            <div className="absolute inset-0 flex flex-col items-start justify-end px-4 py-10 text-white sm:px-6 sm:py-12 md:px-10 md:py-16">
 
-              <h1 className="mb-6 text-5xl font-bold md:text-7xl">
+              <h1 className="mb-4 max-w-4xl text-3xl font-bold sm:mb-6 sm:text-4xl md:text-5xl lg:text-7xl">
 
                 Bienvenido a AeroWarden
 
               </h1>
 
-              <p className="max-w-3xl text-lg text-slate-200 md:text-2xl">
+              <p className="max-w-3xl text-base leading-relaxed text-slate-200 sm:text-lg md:text-xl lg:text-2xl">
 
                 Plataforma web para la gestión de hangares,
                 aeronaves y operaciones de mantenimiento aeronáutico.
@@ -503,12 +499,12 @@ export default function Home() {
 
           </section>
 
-          <div className="mx-auto max-w-6xl space-y-16 px-6 py-16">
+          <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-10 sm:space-y-14 sm:px-6 sm:py-14 lg:space-y-16 lg:py-16">
 
             {/* Quienes somos */}
-            <section className="rounded-3xl bg-white p-10 shadow-xl">
+            <section className="rounded-3xl bg-white p-5 shadow-xl sm:p-8 lg:p-10">
 
-              <h2 className="mb-6 text-center text-3xl font-bold text-slate-900">
+              <h2 className="mb-4 text-center text-2xl font-bold text-slate-900 sm:mb-6 sm:text-3xl">
 
                 ¿Quiénes somos?
 
@@ -542,15 +538,15 @@ export default function Home() {
             {/* Funcionalidades */}
             <section>
 
-              <h2 className="mb-10 text-center text-3xl font-bold text-slate-900">
+              <h2 className="mb-6 text-center text-2xl font-bold text-slate-900 sm:mb-10 sm:text-3xl">
 
                 Funcionalidades Principales
 
               </h2>
 
-              <div className="grid gap-8 md:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
 
-                <div className="rounded-3xl bg-white p-8 shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl text-center">
+                <div className="rounded-3xl bg-white p-6 text-center shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl sm:p-8">
 
                   <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-100 text-3xl mx-auto">
 
@@ -574,7 +570,7 @@ export default function Home() {
 
                 </div>
 
-                <div className="rounded-3xl bg-white p-8 shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl text-center">
+                <div className="rounded-3xl bg-white p-6 text-center shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl sm:p-8">
 
                   <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-100 text-3xl mx-auto">
 
@@ -598,7 +594,7 @@ export default function Home() {
 
                 </div>
 
-                <div className="rounded-3xl bg-white p-8 shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl text-center">
+                <div className="rounded-3xl bg-white p-6 text-center shadow-xl transition duration-300 hover:-translate-y-2 hover:shadow-2xl sm:p-8">
 
                   <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-100 text-3xl mx-auto">
 
@@ -627,22 +623,22 @@ export default function Home() {
             </section>
 
             {/* Flujo del proceso */}
-            <section className="rounded-3xl bg-white p-12 text-center text-slate-900 shadow-xl">
+            <section className="rounded-3xl bg-white p-5 text-center text-slate-900 shadow-xl sm:p-8 lg:p-12">
 
-              <h2 className="mb-6 text-4xl font-bold">
+              <h2 className="mb-4 text-2xl font-bold sm:mb-6 sm:text-3xl lg:text-4xl">
 
                 Flujo de Proceso
 
               </h2>
 
-              <p className="mx-auto max-w-4xl text-lg leading-8 text-slate-600">
+              <p className="mx-auto max-w-4xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
 
                 A continuación se muestra cómo AeroWarden gestiona hangares, aeronaves y operaciones:
 
               </p>
 
-              <div className="mx-auto mt-10 flex max-w-7xl flex-col items-stretch gap-6 text-center md:flex-row md:items-center md:justify-center md:gap-3 lg:gap-4">
-                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+              <div className="mx-auto mt-8 flex max-w-7xl flex-col items-stretch gap-4 text-center sm:mt-10 sm:gap-6 xl:flex-row xl:items-center xl:justify-center xl:gap-3">
+                <div className="flex min-h-40 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-5 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-h-44 sm:p-6 xl:min-h-52 xl:w-80 xl:px-7 xl:py-8">
                   <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
                     1
                   </span>
@@ -652,11 +648,11 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                <div className="hidden shrink-0 items-center justify-center px-1 text-4xl font-black leading-none text-cyan-600 xl:flex xl:text-5xl">
                   →
                 </div>
 
-                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                <div className="flex min-h-40 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-5 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-h-44 sm:p-6 xl:min-h-52 xl:w-80 xl:px-7 xl:py-8">
                   <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
                     2
                   </span>
@@ -666,11 +662,11 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                <div className="hidden shrink-0 items-center justify-center px-1 text-4xl font-black leading-none text-cyan-600 xl:flex xl:text-5xl">
                   →
                 </div>
 
-                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                <div className="flex min-h-40 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-5 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-h-44 sm:p-6 xl:min-h-52 xl:w-80 xl:px-7 xl:py-8">
                   <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
                     3
                   </span>
@@ -680,11 +676,11 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                <div className="hidden shrink-0 items-center justify-center px-1 text-4xl font-black leading-none text-cyan-600 xl:flex xl:text-5xl">
                   →
                 </div>
 
-                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                <div className="flex min-h-40 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-5 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:min-h-44 sm:p-6 xl:min-h-52 xl:w-80 xl:px-7 xl:py-8">
                   <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
                     4
                   </span>
@@ -696,15 +692,15 @@ export default function Home() {
               </div>
 
             </section>
-            <section className="rounded-3xl bg-white p-12 text-center text-slate-900 shadow-xl">
+            <section className="rounded-3xl bg-white p-5 text-center text-slate-900 shadow-xl sm:p-8 lg:p-12">
 
-              <h2 className="mb-6 text-4xl font-bold">
+              <h2 className="mb-4 text-2xl font-bold sm:mb-6 sm:text-3xl lg:text-4xl">
 
                 ¡Comienza ahora con AeroWarden!
 
               </h2>
 
-              <p className="mx-auto max-w-4xl text-lg leading-8 text-slate-600">
+              <p className="mx-auto max-w-4xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
 
                 Inicia tu aventura en la gestión con una plataforma segura, moderna y fácil de usar.
 
