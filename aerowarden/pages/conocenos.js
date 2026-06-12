@@ -27,7 +27,7 @@ export default function conocenos() {
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
             <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Nuestra visión</h2>
             <img
-              src="/images/vision.jpg"
+              src="/hang-aeronave.png"
               className="mb-5 h-44 w-full rounded-2xl object-cover"
             />
             <p className="text-left text-slate-600 leading-8">

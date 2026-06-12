@@ -1,16 +1,28 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { signIn, useSession } from "next-auth/react";
-
 import Header from "@/Componets/common/Header";
+import { buildDashboardPendientes } from "@/lib/pendientes";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [hangars, setHangars] = useState([]);
+  const [aircraftByHangar, setAircraftByHangar] = useState({});
   const [loadingHangars, setLoadingHangars] = useState(false);
+  const [loadingPendientes, setLoadingPendientes] = useState(false);
+
+  const featuredHangars = useMemo(
+    () => hangars.slice(0, 3),
+    [hangars]
+  );
+
+  const dashboardPendientes = useMemo(
+    () => buildDashboardPendientes(hangars, aircraftByHangar),
+    [hangars, aircraftByHangar]
+  );
 
   const authError = Array.isArray(
     router.query.error
@@ -58,34 +70,75 @@ export default function Home() {
   ]);
   useEffect(() => {
 
-  if (!session) {
-    return;
-  }
-
-  const loadHangars = async () => {
-
-    setLoadingHangars(true);
-
-    try {
-
-      const response = await fetch("/api/hangars");
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Error al cargar hangares"
-        );
-      }
-      setHangars(data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingHangars(false);
-
+    if (!session) {
+      return;
     }
-  };
-  loadHangars();
 
-}, [session]);
+    const loadHangars = async () => {
+
+      setLoadingHangars(true);
+
+      try {
+
+        const response = await fetch("/api/hangars");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Error al cargar hangares"
+          );
+        }
+        setHangars(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingHangars(false);
+
+      }
+    };
+    loadHangars();
+
+  }, [session]);
+
+  useEffect(() => {
+
+    if (!session || hangars.length === 0) {
+      setAircraftByHangar({});
+      return;
+    }
+
+    const loadAircraftForHangars = async () => {
+
+      setLoadingPendientes(true);
+
+      try {
+
+        const aircraftEntries = await Promise.all(
+          hangars.map(async (hangar) => {
+            const response = await fetch(
+              `/api/aircraft?hangarId=${hangar._id}`
+            );
+            const data = await response.json();
+
+            return [
+              hangar._id,
+              response.ok ? data : [],
+            ];
+          })
+        );
+
+        setAircraftByHangar(
+          Object.fromEntries(aircraftEntries)
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingPendientes(false);
+      }
+    };
+
+    loadAircraftForHangars();
+
+  }, [session, hangars]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-black">
@@ -118,232 +171,302 @@ export default function Home() {
       ) : session ? (
 
         /* Contenido para usuarios autenticados */
-       <main>
+        <main>
 
-    {/* Hero Section */}
-    <section className="relative bg-black h-125 overflow-hidden">
+          {/* Hero Section */}
+          <section className="relative bg-black h-125 overflow-hidden">
 
-        <img
-            src="/hang.aeronave_2.jpg"
-            alt="AeroWarden"
-            className="h-full w-full object-cover opacity-40"
-        />
+            <img
+              src="/hang_aeronave_2.jpg"
+              alt="AeroWarden"
+              fill
+              priority
+              className="h-full w-full object-cover opacity-40"
+            />
 
-        <div className="absolute inset-0 flex flex-col items-start justify-end px-10 py-16 text-white">
+            <div className="absolute inset-0 flex flex-col items-start justify-end text-white px-10 py-16">
 
-            <h1 className="mb-6 text-5xl font-bold md:text-7xl">
+              <h1 className="mb-6 text-5xl font-bold md:text-7xl">
 
                 Bienvenido a AeroWarden
 
-            </h1>
+              </h1>
 
-            <p className="max-w-3xl text-lg text-slate-200 md:text-2xl">
+              <p className="max-w-3xl text-lg text-slate-200 md:text-2xl">
 
                 Plataforma web para la gestión de hangares,
                 aeronaves y operaciones de mantenimiento aeronáutico.
 
-            </p>
-
-        </div>
-
-    </section>
-
-    <section className="mx-auto max-w-7xl px-6 py-12">
-
-        <div className="grid gap-8 lg:grid-cols-2">
-
-            {/* Mis hangares */}
-           {/* Hangares */}
-    <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
-
-        <div className="mb-6 flex items-center justify-between">
-
-            <div>
-
-                <h2 className="text-2xl font-bold text-slate-900">
-                    Tus hangares
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                    Accede rápidamente a tus hangares más recientes.
-                </p>
+              </p>
 
             </div>
 
-            <Link
-                href="/hangars"
-                className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
-            >
-                Ver todos
+          </section>
 
-                <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
+          <section className="mx-auto max-w-7xl px-6 py-12">
+
+            <div className="grid gap-8 lg:grid-cols-2">
+
+              {/* Mis hangares */}
+              {/* Hangares */}
+              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
+
+                <div className="mb-6 flex items-center justify-between">
+
+                  <div>
+
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      Tus hangares
+                    </h2>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Accede rápidamente a tus hangares más recientes.
+                    </p>
+
+                  </div>
+
+                  <Link
+                    href="/hangars"
+                    className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
+                  >
+                    Ver todos
+
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
                         d="M9 5l7 7-7 7"
-                    />
-                </svg>
+                      />
+                    </svg>
 
-            </Link>
+                  </Link>
 
-        </div>
+                </div>
 
-        {loadingHangars ? (
+                {loadingHangars ? (
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-500">
-                Cargando hangares...
-            </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-500">
+                    Cargando hangares...
+                  </div>
 
-        ) : hangars.length > 0 ? (
+                ) : hangars.length > 0 ? (
 
-            <div className="w-full flex flex-col justify-start items-center gap-3 p-2">
+                  <div className="flex w-full flex-col items-stretch gap-3 p-2">
 
-                {hangars
-                    .slice(0, 3)
-                    .map((hangar) => (
+                    {featuredHangars.map((hangar) => (
 
-                        <div
-                            key={hangar._id}
-                            className="w-full h-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 gap-1 shadow-sm 
-                            transition hover:-translate-y-1 hover:shadow-md"
-                        >
+                      <Link
+                        key={hangar._id}
+                        href={`/hangars/${hangar._id}`}
+                        className="group w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:bg-cyan-50 hover:shadow-md"
+                      >
+
+                        <div className="flex items-start justify-between gap-3">
+
+                          <div>
 
                             <p className="text-xs font-semibold uppercase text-cyan-600">
-                                Hangar
+                              Hangar
                             </p>
 
-                            <h3 className="text-xl font-bold text-slate-900">
-                                {hangar.name}
+                            <h3 className="text-xl font-bold text-slate-900 group-hover:text-cyan-900">
+                              {hangar.name}
                             </h3>
 
-                            <p className=" text-sm text-slate-500">
-                                {hangar.location || "Ubicación no especificada"}
+                            <p className="text-sm text-slate-500">
+                              {hangar.location || "Ubicación no especificada"}
                             </p>
+
+                            {hangar.baseAirport && (
+                              <p className="mt-1 text-xs text-slate-500">
+                                {hangar.baseAirport}
+                              </p>
+                            )}
+
+                          </div>
+
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 transition group-hover:bg-cyan-100 group-hover:text-cyan-800">
+                            Ir al hangar
+                          </span>
 
                         </div>
 
+                      </Link>
+
                     ))}
 
-            </div>
+                  </div>
 
-        ) : (
+                ) : (
 
-            <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500">
 
-                <p>
-                    Aún no tienes hangares registrados.
-                </p>
+                    <p>
+                      Aún no tienes hangares registrados.
+                    </p>
 
-                <Link
-                    href="/hangars"
-                    className="mt-4 inline-flex items-center gap-2 font-medium text-cyan-600 hover:text-cyan-700"
-                >
-                    Crear mi primer hangar
+                    <Link
+                      href="/hangars"
+                      className="mt-4 inline-flex items-center gap-2 font-medium text-cyan-600 hover:text-cyan-700"
+                    >
+                      Crear mi primer hangar
 
-                    <svg
+                      <svg
                         className="h-4 w-4"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
-                    >
+                      >
                         <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
                         />
-                    </svg>
+                      </svg>
 
-                </Link>
+                    </Link>
 
-            </div>
+                  </div>
 
-        )}
+                )}
 
-    </section>
+              </section>
 
 
-    {/* Pendientes */}
-    <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
+              {/* Pendientes */}
+              <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
 
-        <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex items-center justify-between">
 
-            <div>
+                  <div>
 
-                <h2 className="text-2xl font-bold text-slate-900">
-                    Pendientes
-                </h2>
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      Pendientes
+                    </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                    Actividades que requieren atención.
-                </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Actividades que requieren atención.
+                    </p>
 
-            </div>
+                  </div>
 
-            <Link
-                href="/pending"
-               className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
-            >
-                Ver todos
+                  <Link
+                    href="/pending"
+                    className="flex items-center gap-2 text-sm font-semibold text-black transition hover:bg-slate-100 px-3 py-4 rounded-lg"
+                  >
+                    Ver todos
 
-                <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
                         d="M9 5l7 7-7 7"
-                    />
-                </svg>
+                      />
+                    </svg>
 
-            </Link>
+                  </Link>
 
-        </div>
-
-        <div className="space-y-4">
-
-            {[
-                "Inspección Cessna 172",
-                "Actualizar reporte Piper PA-28",
-                "Revisión documental del hangar",
-                "Mantenimiento preventivo programado",
-                "Verificar inventario de herramientas",
-            ].map((task, index) => (
-
-                <div
-                    key={index}
-                    className="w-full h-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 gap-1 shadow-sm 
-                            transition hover:-translate-y-1 hover:shadow-md"
-                >
-                    <div>
-                        <p className="font-medium text-slate-800">
-                            {task}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                            Pendiente
-                        </p>
-
-                    </div>
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                        Pendiente
-                    </span>
                 </div>
-            ))}
-        </div>
-    </section>
-        </div>
-    </section>
-</main>
+
+                {loadingPendientes ? (
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-500">
+                    Cargando pendientes...
+                  </div>
+
+                ) : dashboardPendientes.length > 0 ? (
+
+                  <div className="space-y-4">
+
+                    {dashboardPendientes.map((task) => (
+
+                      <Link
+                        key={`${task.aircraftId}-${task.title}`}
+                        href={`/hangars/${task.hangarId}/aircraft/${task.aircraftId}`}
+                        className="group flex w-full items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-1 hover:border-amber-200 hover:bg-amber-50 hover:shadow-md"
+                      >
+
+                        <div>
+
+                          <p className="font-medium text-slate-800 group-hover:text-amber-900">
+                            {task.title}
+                          </p>
+
+                          <p className="mt-1 text-sm text-slate-500">
+                            {task.taskType}
+                            {" · "}
+                            {task.registration}
+                            {task.description
+                              ? ` · ${task.description}`
+                              : ""}
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            {task.hangarName}
+                          </p>
+
+                        </div>
+
+                        <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                          Pendiente
+                        </span>
+
+                      </Link>
+
+                    ))}
+
+                  </div>
+
+                ) : (
+
+                  <div className="rounded-2xl border border-dashed border-slate-300 p-6 text-slate-500">
+
+                    <p>
+                      No hay trabajos pendientes en tus hangares.
+                    </p>
+
+                    <Link
+                      href="/hangars"
+                      className="mt-4 inline-flex items-center gap-2 font-medium text-cyan-600 hover:text-cyan-700"
+                    >
+                      Ir a mis hangares
+
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+
+                    </Link>
+
+                  </div>
+
+                )}
+              </section>
+            </div>
+          </section>
+        </main>
 
       ) : (
 
@@ -354,7 +477,7 @@ export default function Home() {
           <section className="relative bg-black h-125 overflow-hidden">
 
             <img
-              src="/hang.aeronave_2.jpg"
+              src="/hang_aeronave_2.jpg"
               alt="AeroWarden"
               fill
               priority
@@ -393,12 +516,12 @@ export default function Home() {
 
               <p className="leading-8 text-slate-600">
 
-                AeroWarden es una plataforma diseñada para optimizar 
-                las operaciones de hangares aeronáuticos mediante 
-                la gestión digital de aeronaves, el seguimiento 
-                de trabajos de mantenimiento y la generación de reportes 
-                operativos. Centraliza la información en un solo entorno, 
-                reduciendo procesos manuales y mejorando el control, 
+                AeroWarden es una plataforma diseñada para optimizar
+                las operaciones de hangares aeronáuticos mediante
+                la gestión digital de aeronaves, el seguimiento
+                de trabajos de mantenimiento y la generación de reportes
+                operativos. Centraliza la información en un solo entorno,
+                reduciendo procesos manuales y mejorando el control,
                 la trazabilidad y la eficiencia de las operaciones.
 
               </p>
@@ -518,31 +641,57 @@ export default function Home() {
 
               </p>
 
-              <div className="mt-10 flex flex-col items-center gap-6 text-center md:flex-row md:justify-center md:space-x-4">
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
-                  <h3 className="mt-3 text-xl font-semibold">Registro y Acceso</h3>
-                  <p className="mt-2 text-sm text-slate-600">Crea tu cuenta y accede a tu espacio aeronáutico.</p>
+              <div className="mx-auto mt-10 flex max-w-7xl flex-col items-stretch gap-6 text-center md:flex-row md:items-center md:justify-center md:gap-3 lg:gap-4">
+                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                  <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
+                    1
+                  </span>
+                  <h3 className="text-xl font-semibold">Registro y Acceso</h3>
+                  <p className="mt-3 max-w-xs text-sm leading-6 text-slate-600">
+                    Crea tu cuenta y accede a tu espacio aeronáutico.
+                  </p>
                 </div>
 
-                <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
-
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
-                  <h3 className="mt-3 text-xl font-semibold">Configura Hangares</h3>
-                  <p className="mt-2 text-sm text-slate-600">Registra tus hangares y define su ubicación.</p>
+                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                  →
                 </div>
 
-                <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
-
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
-                  <h3 className="mt-3 text-xl font-semibold">Administra Aeronaves</h3>
-                  <p className="mt-2 text-sm text-slate-600">Almacena datos de aeronaves y lleva su historial completo.</p>
+                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                  <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
+                    2
+                  </span>
+                  <h3 className="text-xl font-semibold">Configura Hangares</h3>
+                  <p className="mt-3 max-w-xs text-sm leading-6 text-slate-600">
+                    Registra tus hangares y define su ubicación.
+                  </p>
                 </div>
 
-                <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
+                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                  →
+                </div>
 
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
-                  <h3 className="mt-3 text-xl font-semibold">Monitorea Operaciones</h3>
-                  <p className="mt-2 text-sm text-slate-600">Supervisa trabajos, mantenimiento y reportes desde un panel central.</p>
+                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                  <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
+                    3
+                  </span>
+                  <h3 className="text-xl font-semibold">Administra Aeronaves</h3>
+                  <p className="mt-3 max-w-xs text-sm leading-6 text-slate-600">
+                    Almacena datos de aeronaves y lleva su historial completo.
+                  </p>
+                </div>
+
+                <div className="hidden shrink-0 items-center justify-center px-1 text-5xl font-black leading-none text-cyan-600 md:flex lg:text-6xl">
+                  →
+                </div>
+
+                <div className="flex min-h-44 w-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-gray-100 p-6 text-slate-900 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-h-52 md:w-80 md:px-7 md:py-8 lg:w-96">
+                  <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-100 text-sm font-bold text-cyan-700">
+                    4
+                  </span>
+                  <h3 className="text-xl font-semibold">Monitorea Operaciones</h3>
+                  <p className="mt-3 max-w-xs text-sm leading-6 text-slate-600">
+                    Supervisa trabajos, mantenimiento y reportes desde un panel central.
+                  </p>
                 </div>
               </div>
 

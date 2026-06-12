@@ -12,6 +12,31 @@ const HangarSchema = new mongoose.Schema(
             default: "",
         },
 
+        baseAirport: {
+            type: String,
+            default: "",
+            uppercase: true,
+            trim: true,
+        },
+
+        description: {
+            type: String,
+            default: "",
+        },
+
+        classification: {
+            type: String,
+            enum: [
+                "Mantenimiento",
+                "Aviación General",
+                "Aviación Ejecutiva",
+                "Comercial",
+                "Militar/Gubernamental",
+                "Multipropósito",
+            ],
+            default: "Multipropósito",
+        },
+
         owner: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -22,6 +47,11 @@ const HangarSchema = new mongoose.Schema(
             type: String,
             unique: true,
             required: true,
+        },
+
+        inviteCodeExpiresAt: {
+            type: Date,
+            default: null,
         },
 
         members: [
@@ -54,8 +84,8 @@ const HangarSchema = new mongoose.Schema(
     }
 );
 
-export default mongoose.models.Hangar ||
-    mongoose.model(
-        "Hangar",
-        HangarSchema
-    );
+if (mongoose.models.Hangar) {
+    delete mongoose.models.Hangar;
+}
+
+export default mongoose.model("Hangar", HangarSchema);

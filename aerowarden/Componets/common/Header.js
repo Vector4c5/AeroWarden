@@ -66,7 +66,7 @@ export default function Header() {
                                 Inicio
                             </Link>
                             <Link
-                               href="/landing"
+                                href="/hangars"
                                 className="text-lg font-medium text-black p-1 px-4 rounded-xl transition hover:bg-slate-100"
                             >
                                 Hangares
