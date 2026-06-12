@@ -351,30 +351,41 @@ export default function Home() {
         <main>
 
           {/* Hero Section */}
-          <section className="relative bg-black h-200 overflow-hidden">
+          <section className="relative h-125 overflow-hidden">
 
+            {/* Imagen de fondo */}
             <img
               src="/hang.aeronave_2.jpg"
               alt="AeroWarden"
-              fill
-              priority
-              className="object-cover opacity-40"
+              className="absolute inset-0 h-full w-full object-cover opacity-40"
             />
 
-            <div className="absolute inset-0 flex flex-col items-start justify-center text-white px-10 py-16">
+            {/* Overlay opcional */}
+            <div className="absolute inset-0 bg-slate-950/50" />
 
-              <h1 className="mb-6 text-5xl font-bold md:text-7xl">
+            {/* Contenido */}
+            <div className="relative mx-auto flex h-full max-w-7xl flex-col items-start justify-center gap-8 px-6 py-10 text-white md:flex-row md:items-center">
 
-                Bienvenido a AeroWarden
+              {/* Texto */}
+              <div className="max-w-3xl">
+                <h1 className="text-4xl font-bold md:text-6xl">
+                  Bienvenido a AeroWarden
+                </h1>
 
-              </h1>
+                <p className="mt-6 max-w-xl text-lg leading-8 text-slate-200 md:text-2xl">
+                  Plataforma web para la gestión de hangares,
+                  aeronaves y operaciones de mantenimiento aeronáutico.
+                </p>
+              </div>
 
-              <p className="max-w-3xl text-lg text-slate-200 md:text-2xl">
-
-                Plataforma web para la gestión de hangares,
-                aeronaves y operaciones de mantenimiento aeronáutico.
-
-              </p>
+              {/* Imagen lateral */}
+              <div className="hidden md:flex max-w-md rounded-4xl shadow-2xl shadow-slate-950/20 overflow-hidden bg-white/5">
+                <img
+                  src="/ChatGPT%20Image%2011%20jun%202026,%2010_23_58%20p.m..png"
+                  alt="ChatGPT"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
 
             </div>
 
@@ -391,7 +402,7 @@ export default function Home() {
 
               </h2>
 
-              <p className="leading-8 text-slate-600">
+              <p className="mx-auto max-w-3xl text-justify leading-8 text-slate-600">
 
                 AeroWarden es una plataforma diseñada para optimizar 
                 las operaciones de hangares aeronáuticos mediante 
@@ -403,7 +414,7 @@ export default function Home() {
 
               </p>
 
-              <p className="mt-4 leading-8 text-slate-600">
+              <p className="mt-4 mx-auto max-w-3xl text-justify leading-8 text-slate-600">
 
                 Nuestro objetivo es ayudar a talleres y
                 organizaciones aeronáuticas a optimizar
@@ -518,29 +529,29 @@ export default function Home() {
 
               </p>
 
-              <div className="mt-10 flex flex-col items-center gap-6 text-center md:flex-row md:justify-center md:space-x-4">
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
+              <div className="mt-10 flex flex-col items-center gap-6 text-center md:flex-row md:items-stretch md:justify-center md:space-x-4">
+                <div className="flex h-full w-full flex-1 min-h-45 flex-col justify-center rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
                   <h3 className="mt-3 text-xl font-semibold">Registro y Acceso</h3>
                   <p className="mt-2 text-sm text-slate-600">Crea tu cuenta y accede a tu espacio aeronáutico.</p>
                 </div>
 
                 <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
 
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
+                <div className="flex h-full w-full flex-1 min-h-45 flex-col justify-center rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
                   <h3 className="mt-3 text-xl font-semibold">Configura Hangares</h3>
                   <p className="mt-2 text-sm text-slate-600">Registra tus hangares y define su ubicación.</p>
                 </div>
 
                 <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
 
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
+                <div className="flex h-full w-full flex-1 min-h-45 flex-col justify-center rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
                   <h3 className="mt-3 text-xl font-semibold">Administra Aeronaves</h3>
                   <p className="mt-2 text-sm text-slate-600">Almacena datos de aeronaves y lleva su historial completo.</p>
                 </div>
 
                 <div className="hidden md:flex items-center text-3xl text-black font-black">→</div>
 
-                <div className="w-full rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
+                <div className="flex h-full w-full flex-1 min-h-45 flex-col justify-center rounded-3xl border border-slate-200 bg-gray-100 p-6 text-slate-900 md:w-72 text-center">
                   <h3 className="mt-3 text-xl font-semibold">Monitorea Operaciones</h3>
                   <p className="mt-2 text-sm text-slate-600">Supervisa trabajos, mantenimiento y reportes desde un panel central.</p>
                 </div>
