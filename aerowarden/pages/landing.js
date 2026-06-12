@@ -189,28 +189,10 @@ export default function Landing() {
             <Header />
 
             <main className="w-full h-auto flex flex-col items-center justify-start">
-
                 <section className="w-full rounded-3xl border border-slate-200 bg-white">
-
-
-                    {session && (
-
-                        <div className="mt-5">
-
-                            <Link
-                                href="/hangars"
-                                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60 transition hover:border-slate-300 hover:text-slate-950"
-                            >
-                                Ver  hangares y aeronaves
-                            </Link>
-                        </div>
-
-                    )}
-
                     <div className="mt-8 space-y-8">
 
                         {session && (
-
                             <div>
 
                                 <button
