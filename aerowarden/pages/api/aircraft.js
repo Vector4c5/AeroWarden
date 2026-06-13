@@ -145,6 +145,7 @@ export async function handler(req, res) {
                 intakeReportByName,
                 registration,
                 manufacturer,
+                model,
                 serialNumber,
                 aircraftType,
                 stayReason,
@@ -198,6 +199,7 @@ export async function handler(req, res) {
             const safeIntakeName = intakeReportByName?.trim();
             const safeRegistration = registration?.trim().toUpperCase();
             const safeManufacturer = manufacturer?.trim();
+            const safeModel = model?.trim();
             const safeSerialNumber = serialNumber?.trim();
             const safeStayReason = stayReason?.trim();
 
@@ -206,6 +208,7 @@ export async function handler(req, res) {
                 !safeIntakeName ||
                 !safeRegistration ||
                 !safeManufacturer ||
+                !safeModel ||
                 !safeSerialNumber ||
                 !aircraftType ||
                 !safeStayReason ||
@@ -268,7 +271,7 @@ export async function handler(req, res) {
                 intakeReportByName: safeIntakeName,
                 registration: safeRegistration,
                 manufacturer: safeManufacturer,
-                model: safeManufacturer,
+                model: safeModel,
                 serialNumber: safeSerialNumber,
                 aircraftType,
                 stayReason: safeStayReason,

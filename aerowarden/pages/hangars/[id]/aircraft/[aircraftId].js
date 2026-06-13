@@ -500,7 +500,9 @@ export default function AircraftDetailPage() {
                                         {aircraft.registration}
                                     </h1>
                                     <p className="mt-2 text-sm text-slate-600">
-                                        {aircraft.manufacturer}
+                                        {[aircraft.manufacturer, aircraft.model]
+                                            .filter(Boolean)
+                                            .join(" · ")}
                                     </p>
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -561,6 +563,10 @@ export default function AircraftDetailPage() {
                                 <InfoItem
                                     label="Fabricante"
                                     value={aircraft.manufacturer}
+                                />
+                                <InfoItem
+                                    label="Modelo"
+                                    value={aircraft.model || "Sin modelo"}
                                 />
                                 <InfoItem
                                     label="Número de serie"

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Header from "@/Componets/common/Header";
 import { notifyError, notifySuccess } from "@/lib/notifications";
 import { PENDING_TASK_TYPES } from "@/lib/pendingTaskTypes";
+import { buildDisplayName } from "@/lib/userProfile";
 
 const HANGAR_CLASSIFICATIONS = [
     "Mantenimiento",
@@ -51,10 +52,10 @@ const emptyMaintenanceTask = () => ({
     taskType: "Mantenimiento",
 });
 
-const getEmptyAircraftForm = (userName = "") => ({
-    intakeReportByName: userName,
+const getEmptyAircraftForm = () => ({
     registration: "",
     manufacturer: "",
+    model: "",
     serialNumber: "",
     aircraftType: "Ala fija",
     stayReason: "Mantenimiento",
@@ -195,10 +196,17 @@ export default function HangarDetailPage() {
         [hangarAircraft]
     );
 
+    const intakeReporterName = useMemo(
+        () =>
+            buildDisplayName(
+                session?.user?.firstNames,
+                session?.user?.lastNames
+            ) || session?.user?.name || "",
+        [session]
+    );
+
     const openAircraftModal = () => {
-        setAircraftForm(
-            getEmptyAircraftForm(session?.user?.name || "")
-        );
+        setAircraftForm(getEmptyAircraftForm());
         setIsAircraftModalOpen(true);
     };
 
@@ -355,6 +363,15 @@ export default function HangarDetailPage() {
 
         if (!resolvedStayReason) {
             notifyError("Debes indicar la razón de estancia");
+            setSavingAircraft(false);
+            return;
+        }
+
+        if (!intakeReporterName) {
+            notifyError(
+                "Completa tu perfil con nombres y apellidos antes de registrar una aeronave"
+            );
+            setSavingAircraft(false);
             return;
         }
 
@@ -366,9 +383,10 @@ export default function HangarDetailPage() {
                 },
                 body: JSON.stringify({
                     hangarId: id,
-                    intakeReportByName: aircraftForm.intakeReportByName,
+                    intakeReportByName: intakeReporterName,
                     registration: aircraftForm.registration,
                     manufacturer: aircraftForm.manufacturer,
+                    model: aircraftForm.model,
                     serialNumber: aircraftForm.serialNumber,
                     aircraftType: aircraftForm.aircraftType,
                     stayReason: resolvedStayReason,
@@ -729,8 +747,10 @@ export default function HangarDetailPage() {
                                                         {aircraft.registration}
                                                     </h3>
                                                     <p className="mt-1 text-sm text-slate-600">
-                                                        {aircraft.manufacturer ||
-                                                            aircraft.model}
+                                                        {[aircraft.manufacturer, aircraft.model]
+                                                            .filter(Boolean)
+                                                            .join(" · ") ||
+                                                            "Sin modelo"}
                                                     </p>
                                                     <p className="mt-2 text-xs text-slate-500">
                                                         Serie:{" "}
@@ -896,16 +916,14 @@ export default function HangarDetailPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={aircraftForm.intakeReportByName}
-                                        onChange={(e) =>
-                                            setAircraftForm((current) => ({
-                                                ...current,
-                                                intakeReportByName: e.target.value,
-                                            }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
-                                        required
+                                        value={intakeReporterName}
+                                        readOnly
+                                        className="w-full rounded-lg border border-slate-200 bg-slate-100 p-3 text-slate-600"
                                     />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Se toma de los nombres y apellidos de tu
+                                        perfil.
+                                    </p>
                                 </div>
 
                                 <div>
@@ -938,6 +956,24 @@ export default function HangarDetailPage() {
                                             setAircraftForm((current) => ({
                                                 ...current,
                                                 manufacturer: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        Modelo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={aircraftForm.model}
+                                        onChange={(e) =>
+                                            setAircraftForm((current) => ({
+                                                ...current,
+                                                model: e.target.value,
                                             }))
                                         }
                                         className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
@@ -1522,7 +1558,9 @@ export default function HangarDetailPage() {
                                 {selectedAircraftForExit.registration}
                             </h3>
                             <p className="mt-1 text-sm text-slate-600">
-                                {selectedAircraftForExit.manufacturer}
+                                {[selectedAircraftForExit.manufacturer, selectedAircraftForExit.model]
+                                    .filter(Boolean)
+                                    .join(" · ")}
                             </p>
                         </div>
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect, useMemo } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Header from "@/Componets/common/Header";
 import { buildDashboardPendientes } from "@/lib/pendientes";
 
@@ -706,13 +706,12 @@ export default function Home() {
 
               </p>
 
-              <button
-                type="button"
-                onClick={() => signIn()}
+              <Link
+                href="/login?mode=register"
                 className="mt-8 inline-flex rounded-full bg-gray-100 px-8 py-4 text-base font-semibold text-slate-900 transition hover:bg-gray-200"
               >
                 Regístrate
-              </button>
+              </Link>
 
             </section>
 
