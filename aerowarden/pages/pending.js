@@ -13,7 +13,7 @@ import {
 
 function formatDate(value) {
     if (!value) {
-        return "Sin fecha";
+        return "Sin fecha"; 
     }
 
     return new Date(value).toLocaleDateString("es-MX", {
@@ -22,7 +22,6 @@ function formatDate(value) {
         day: "numeric",
     });
 }
-
 export default function PendingPage() {
     const { data: session } = useSession();
 
@@ -116,9 +115,8 @@ export default function PendingPage() {
                                 Pendientes
                             </h1>
                             <p className="mt-2 text-sm text-slate-500">
-                                Todos los trabajos de mantenimiento pendientes
-                                en tus hangares. Ordenados por tiempo de
-                                estancia de la aeronave.
+                                Todos los pendientes
+                                de mantenimiento de las aeronaves.
                             </p>
                         </div>
                         <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">

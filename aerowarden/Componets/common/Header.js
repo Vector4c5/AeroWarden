@@ -3,6 +3,8 @@ import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
 
+import { AIRCRAFT_REPORT_LOGO_SRC } from "@/lib/aircraftReportConfig";
+
 export default function Header() {
     const router = useRouter();
     const { data: session } = useSession();
@@ -64,21 +66,28 @@ export default function Header() {
     const linkClass =
         "block rounded-xl px-4 py-2.5 text-base font-medium text-slate-900 transition hover:bg-slate-100";
 
+    const loginButtonClass =
+        "inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold !text-white shadow-sm transition duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg active:scale-100 lg:px-5 lg:py-2.5 lg:text-base";
+
     const sessionLabel =
         session?.user?.username ||
         session?.user?.name ||
         "Usuario";
 
     return (
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-slate-200/90 p-2 shadow-xl backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-slate-200 p-2 shadow-xl backdrop-blur-xl">
             <div className="mx-auto flex h-14 min-h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
                 <Link
                     href="/"
                     className="flex min-w-0 items-center gap-2 sm:gap-3"
                     onClick={() => setMobileMenuOpen(false)}
                 >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white sm:h-10 sm:w-10">
-                        AW
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white sm:h-10 sm:w-10">
+                        <img
+                            src={AIRCRAFT_REPORT_LOGO_SRC}
+                            alt="AeroWarden"
+                            className="h-full w-full object-contain p-1"
+                        />
                     </div>
                     <span className="truncate text-lg font-bold text-slate-900 sm:text-xl">
                         AeroWarden
@@ -170,7 +179,7 @@ export default function Header() {
                             ))}
                             <Link
                                 href="/login"
-                                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 lg:px-5 lg:text-base"
+                                className={loginButtonClass}
                             >
                                 Iniciar sesión
                             </Link>
@@ -273,7 +282,7 @@ export default function Header() {
                         ) : (
                             <Link
                                 href="/login"
-                                className="mt-2 block w-full rounded-full bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+                                className={`${loginButtonClass} mt-2 w-full py-3`}
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Iniciar sesión
