@@ -1409,8 +1409,8 @@ export default function AircraftDetailPage() {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-6">
-                            <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 shadow-lg">
+                        <div className="flex-1 overflow-y-auto bg-slate-100 p-2 sm:p-6">
+                            <div className="mx-auto w-full rounded-2xl border border-slate-200 bg-white shadow-lg">
                                 <AircraftReportPreview reportData={reportData} />
                             </div>
                         </div>

@@ -17,6 +17,9 @@ export const AIRCRAFT_REPORT_LOGO = {
     pdfWidth: 24,
 };
 
+/** Ancho de la vista previa en pantalla (A4 a ~96 dpi). */
+export const AIRCRAFT_REPORT_PREVIEW_WIDTH_PX = 794;
+
 export const AIRCRAFT_REPORT_TITLE = "REPORTE DE AERONAVE";
 
 export const AIRCRAFT_REPORT_SECTIONS = {

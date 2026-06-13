@@ -1,11 +1,74 @@
+import { useEffect, useRef, useState } from "react";
 import {
     AIRCRAFT_REPORT_COLORS,
     AIRCRAFT_REPORT_LOGO,
     AIRCRAFT_REPORT_LOGO_SRC,
+    AIRCRAFT_REPORT_PREVIEW_WIDTH_PX,
     AIRCRAFT_REPORT_SECTIONS,
     AIRCRAFT_REPORT_TITLE,
 } from "@/lib/aircraftReportConfig";
 import { getAircraftInfoFields } from "@/lib/aircraftReport";
+
+function ScaledDocumentFrame({ children }) {
+    const containerRef = useRef(null);
+    const contentRef = useRef(null);
+    const [scale, setScale] = useState(1);
+    const [frameHeight, setFrameHeight] = useState(0);
+
+    useEffect(() => {
+        const updateScale = () => {
+            const container = containerRef.current;
+            const content = contentRef.current;
+            if (!container || !content) {
+                return;
+            }
+
+            const availableWidth = container.clientWidth;
+            const nextScale = Math.min(
+                1,
+                availableWidth / AIRCRAFT_REPORT_PREVIEW_WIDTH_PX
+            );
+
+            setScale(nextScale);
+            setFrameHeight(content.offsetHeight * nextScale);
+        };
+
+        updateScale();
+
+        const resizeObserver = new ResizeObserver(updateScale);
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current);
+        }
+        if (contentRef.current) {
+            resizeObserver.observe(contentRef.current);
+        }
+
+        return () => resizeObserver.disconnect();
+    }, [children]);
+
+    return (
+        <div ref={containerRef} className="w-full overflow-hidden">
+            <div
+                className="mx-auto"
+                style={{
+                    width: AIRCRAFT_REPORT_PREVIEW_WIDTH_PX * scale,
+                    height: frameHeight || undefined,
+                }}
+            >
+                <div
+                    ref={contentRef}
+                    className="origin-top-left"
+                    style={{
+                        width: AIRCRAFT_REPORT_PREVIEW_WIDTH_PX,
+                        transform: `scale(${scale})`,
+                    }}
+                >
+                    {children}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 function UnifiedSectionTable({ title, headers, rows, compact = false }) {
     return (
@@ -202,10 +265,14 @@ export default function AircraftReportPreview({ reportData }) {
             : [["—", "Sin pendientes registrados", "—", "—", "—", "—", "—"]];
 
     return (
-        <div
-            className="mx-auto max-w-4xl bg-white px-8 py-10 text-slate-900"
-            style={{ color: AIRCRAFT_REPORT_COLORS.text }}
-        >
+        <ScaledDocumentFrame>
+            <div
+                className="bg-white px-8 py-10 text-slate-900"
+                style={{
+                    width: AIRCRAFT_REPORT_PREVIEW_WIDTH_PX,
+                    color: AIRCRAFT_REPORT_COLORS.text,
+                }}
+            >
             <div className="flex flex-col items-center text-center">
                 <img
                     src={AIRCRAFT_REPORT_LOGO_SRC}
@@ -280,6 +347,7 @@ export default function AircraftReportPreview({ reportData }) {
             <p className="mt-10 text-center text-xs text-slate-500">
                 AeroWarden · {reportData.aircraft.registration}
             </p>
-        </div>
+            </div>
+        </ScaledDocumentFrame>
     );
 }

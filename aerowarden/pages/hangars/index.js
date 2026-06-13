@@ -1003,9 +1003,10 @@ export default function HangarsPage() {
 
                                                             <Link
                                                                 href={`/hangars/${selectedOwnedHangar._id}`}
-                                                                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-800"
+                                                                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 
+                                                                text-sm font-semibold text-cyan-700 transition hover:bg-cyan-200 hover:text-cyan-800"
                                                             >
-                                                                Ir
+                                                                Ir a hangar
                                                                 <svg
                                                                     className="h-4 w-4"
                                                                     fill="none"
