@@ -149,22 +149,20 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => setMode("login")}
-                            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                                mode === "login"
+                            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${mode === "login"
                                     ? "bg-white text-slate-900 shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
-                            }`}
+                                }`}
                         >
                             Iniciar sesión
                         </button>
                         <button
                             type="button"
                             onClick={() => setMode("register")}
-                            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                                mode === "register"
+                            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition ${mode === "register"
                                     ? "bg-white text-slate-900 shadow-sm"
                                     : "text-slate-600 hover:text-slate-900"
-                            }`}
+                                }`}
                         >
                             Registrarse
                         </button>
@@ -378,20 +376,27 @@ export default function LoginPage() {
                                     callbackUrl: "/profile",
                                 })
                             }
-                            className="flex w-full items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+                            className="flex w-full items-center justify-center gap-3 rounded-full border 
+                            border-slate-200 bg-cyan-400 px-5 py-3 text-sm font-medium text-white transition
+                             hover:bg-cyan-600 duration-300"
                         >
                             Continuar con Google
                         </button>
                     </div>
 
-                    <p className="mt-6 text-center text-sm text-slate-500">
+                    <div className="border-t border-slate-200 pt-6">
                         <Link
                             href="/"
-                            className="font-medium text-cyan-700 hover:text-cyan-800"
+                            className="flex w-full items-center justify-center rounded-full border 
+                            border-black bg-white px-5 py-3 text-sm font-medium transition
+                             hover:bg-slate-200 duration-300"
                         >
-                            Volver al inicio
+                            <p className="text-center text-black">
+                                Volver al inicio
+                            </p>
+
                         </Link>
-                    </p>
+                    </div>
                 </section>
             </main>
         </div>
