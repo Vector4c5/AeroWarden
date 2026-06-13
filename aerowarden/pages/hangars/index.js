@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 
 import Header from "@/Componets/common/Header";
@@ -52,6 +52,33 @@ const emptyHangarForm = {
     classification: "Multipropósito",
 };
 
+const OWNED_PANEL_TABS = [
+    { id: "pending", label: "Pendientes" },
+    { id: "members", label: "Miembros" },
+];
+
+const MEMBER_ROLE_LABELS = {
+    admin: "Administrador",
+    engineer: "Ingeniero",
+    technician: "Técnico",
+};
+
+function formatMemberRole(role) {
+    return MEMBER_ROLE_LABELS[role] || role || "Miembro";
+}
+
+function formatJoinedDate(value) {
+    if (!value) {
+        return "Sin fecha";
+    }
+
+    return new Date(value).toLocaleDateString("es-MX", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
 export default function HangarsPage() {
     const { data: session } = useSession();
 
@@ -68,6 +95,14 @@ export default function HangarsPage() {
     const [aircraftByHangar, setAircraftByHangar] = useState({});
     const [revealingInviteHangarId, setRevealingInviteHangarId] =
         useState(null);
+    const [ownedPanelTab, setOwnedPanelTab] = useState("pending");
+    const [memberToRemove, setMemberToRemove] = useState(null);
+    const [hangarToLeave, setHangarToLeave] = useState(null);
+    const [isRemovingMember, setIsRemovingMember] = useState(false);
+    const [isLeavingHangar, setIsLeavingHangar] = useState(false);
+    const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
+    const [memberActionsMenuOpen, setMemberActionsMenuOpen] = useState(false);
+    const memberActionsMenuRef = useRef(null);
 
     const ownedHangars = useMemo(
         () => hangars.filter((hangar) => hangar.isOwner),
@@ -296,7 +331,7 @@ export default function HangarsPage() {
     }, [memberHangars, selectedMemberHangarId]);
 
     useEffect(() => {
-        if (!isFormOpen && !isJoinOpen) {
+        if (!isFormOpen && !isJoinOpen && !memberToRemove && !hangarToLeave) {
             return;
         }
 
@@ -305,7 +340,38 @@ export default function HangarsPage() {
         return () => {
             document.body.style.overflow = "";
         };
+    }, [isFormOpen, isJoinOpen, memberToRemove, hangarToLeave]);
+
+    useEffect(() => {
+        if (isFormOpen || isJoinOpen) {
+            setIsFabMenuOpen(false);
+        }
     }, [isFormOpen, isJoinOpen]);
+
+    useEffect(() => {
+        setMemberActionsMenuOpen(false);
+    }, [selectedMemberHangarId]);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (
+                memberActionsMenuRef.current &&
+                !memberActionsMenuRef.current.contains(event.target)
+            ) {
+                setMemberActionsMenuOpen(false);
+            }
+        }
+
+        if (!memberActionsMenuOpen) {
+            return undefined;
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [memberActionsMenuOpen]);
 
     const handleCreateHangar = async (e) => {
         e.preventDefault();
@@ -371,23 +437,119 @@ export default function HangarsPage() {
         }
     };
 
+    const handleRemoveMember = async () => {
+        if (!memberToRemove) {
+            return;
+        }
+
+        setIsRemovingMember(true);
+
+        try {
+            const response = await fetch(
+                `/api/hangars?id=${memberToRemove.hangarId}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        action: "remove_member",
+                        memberUserId: memberToRemove.member.userId,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error || "No se pudo expulsar al miembro"
+                );
+            }
+
+            const { message, ...updatedHangar } = data;
+
+            setHangars((current) =>
+                current.map((hangar) =>
+                    hangar._id?.toString() ===
+                    memberToRemove.hangarId.toString()
+                        ? updatedHangar
+                        : hangar
+                )
+            );
+
+            notifySuccess(
+                message || "Miembro expulsado correctamente"
+            );
+            setMemberToRemove(null);
+        } catch (error) {
+            notifyError(error.message);
+        } finally {
+            setIsRemovingMember(false);
+        }
+    };
+
+    const handleLeaveHangar = async () => {
+        if (!hangarToLeave) {
+            return;
+        }
+
+        setIsLeavingHangar(true);
+
+        try {
+            const response = await fetch(
+                `/api/hangars?id=${hangarToLeave._id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        action: "leave_hangar",
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error || "No se pudo salir del hangar"
+                );
+            }
+
+            setHangars((current) =>
+                current.filter(
+                    (hangar) =>
+                        hangar._id?.toString() !==
+                        hangarToLeave._id.toString()
+                )
+            );
+
+            notifySuccess(
+                data.message || "Has salido del hangar correctamente"
+            );
+            setHangarToLeave(null);
+        } catch (error) {
+            notifyError(error.message);
+        } finally {
+            setIsLeavingHangar(false);
+        }
+    };
+
     return (
         <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900">
             <Header />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
                 <div className="mb-6 sm:mb-8">
-                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80 sm:text-sm sm:tracking-[0.3em]">
-                        AeroWarden
-                    </p>
-
                     <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:mt-3 sm:text-3xl">
                         Mis hangares
                     </h1>
 
-                    <p className="mt-3 text-sm text-slate-600">
+                    <p className="mt-3 text-lg text-slate-600">
                         Crea hangares, únete a equipos y consulta pendientes
-                        por hangar antes de entrar a sus aeronaves.
+                        de las aeronaves.
                     </p>
                 </div>
 
@@ -397,31 +559,6 @@ export default function HangarsPage() {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-lg sm:p-6">
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsJoinOpen(false);
-                                        setIsFormOpen(true);
-                                    }}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100 sm:w-auto"
-                                >
-                                    Nuevo hangar
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsFormOpen(false);
-                                        setIsJoinOpen(true);
-                                    }}
-                                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition hover:bg-emerald-100 sm:w-auto"
-                                >
-                                    Unirse a hangar
-                                </button>
-                            </div>
-                        </div>
 
                         {isFormOpen && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -640,7 +777,8 @@ export default function HangarsPage() {
                                             <button
                                                 type="submit"
                                                 disabled={isJoining}
-                                                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-70"
+                                                className="flex-1 rounded-lg bg-black px-4 py-2 font-medium text-white
+                                                 transition hover:bg-slate-800 disabled:opacity-70"
                                             >
                                                 {isJoining ? "Uniéndose..." : "Unirse"}
                                             </button>
@@ -695,9 +833,16 @@ export default function HangarsPage() {
                                                             <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80">
                                                                 Hangar
                                                             </p>
-                                                            <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                                                                {hangar.name}
-                                                            </h3>
+                                                            <div className="mt-2 flex items-start justify-between gap-3">
+                                                                <h3 className="min-w-0 text-lg font-semibold text-slate-950">
+                                                                    {hangar.name}
+                                                                </h3>
+                                                                {hangar.classification && (
+                                                                    <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600">
+                                                                        {hangar.classification}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="mt-1 text-sm text-slate-500">
                                                                 {hangar.location ||
                                                                     "Sin ubicación"}
@@ -709,11 +854,6 @@ export default function HangarsPage() {
                                                                         {hangar.baseAirport}
                                                                     </span>
                                                                 </p>
-                                                            )}
-                                                            {hangar.classification && (
-                                                                <span className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600">
-                                                                    {hangar.classification}
-                                                                </span>
                                                             )}
                                                         </button>
 
@@ -794,84 +934,207 @@ export default function HangarsPage() {
                                             </div>
 
                                             <div>
-                                                <p className="mb-3 text-xs uppercase tracking-[0.24em] text-slate-500">
-                                                    Panel de pendientes
-                                                </p>
+                                                <div className="mb-3 flex flex-wrap gap-2">
+                                                    {OWNED_PANEL_TABS.map((tab) => (
+                                                        <button
+                                                            key={tab.id}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setOwnedPanelTab(
+                                                                    tab.id
+                                                                )
+                                                            }
+                                                            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                                                                ownedPanelTab ===
+                                                                tab.id
+                                                                    ? "bg-cyan-600 text-white"
+                                                                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                                            }`}
+                                                        >
+                                                            {tab.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
 
                                                 {selectedOwnedHangar ? (
                                                     <div className="flex min-h-80 flex-col rounded-2xl border border-slate-200 bg-slate-50 p-5">
                                                         <div className="mb-4 flex items-start justify-between gap-4">
-                                                            <div>
-                                                                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                                                                    Pendientes
-                                                                </p>
-                                                                <h3 className="mt-2 text-xl font-semibold text-slate-950">
-                                                                    {selectedOwnedHangar.name}
-                                                                </h3>
-                                                                <p className="mt-1 text-sm text-slate-500">
-                                                                    Actividades que requieren
-                                                                    atención en este hangar.
-                                                                </p>
+                                                            <div className="min-w-0 flex-1">
+                                                                {ownedPanelTab ===
+                                                                "pending" ? (
+                                                                    <>
+                                                                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                                                                            Pendientes
+                                                                        </p>
+                                                                        <h3 className="mt-2 text-xl font-semibold text-slate-950">
+                                                                            {
+                                                                                selectedOwnedHangar.name
+                                                                            }
+                                                                        </h3>
+                                                                        <p className="mt-1 text-sm text-slate-500">
+                                                                            Actividades que requieren
+                                                                            atención en este hangar.
+                                                                        </p>
+                                                                        <span className="mt-3 inline-flex rounded-full border border-cyan-200 bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
+                                                                            {ownedPendientes.length}{" "}
+                                                                            pendiente
+                                                                            {ownedPendientes.length === 1
+                                                                                ? ""
+                                                                                : "s"}
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                                                                            Miembros
+                                                                        </p>
+                                                                        <h3 className="mt-2 text-xl font-semibold text-slate-950">
+                                                                            {
+                                                                                selectedOwnedHangar.name
+                                                                            }
+                                                                        </h3>
+                                                                        <p className="mt-1 text-sm text-slate-500">
+                                                                            Usuarios que forman parte de
+                                                                            este hangar.
+                                                                        </p>
+                                                                    </>
+                                                                )}
                                                             </div>
-                                                            <span className="rounded-full border border-cyan-200 bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-800">
-                                                                {ownedPendientes.length}{" "}
-                                                                pendiente
-                                                                {ownedPendientes.length === 1
-                                                                    ? ""
-                                                                    : "s"}
-                                                            </span>
+
+                                                            <Link
+                                                                href={`/hangars/${selectedOwnedHangar._id}`}
+                                                                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-800"
+                                                            >
+                                                                Ir
+                                                                <svg
+                                                                    className="h-4 w-4"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth={2}
+                                                                        d="M9 5l7 7-7 7"
+                                                                    />
+                                                                </svg>
+                                                            </Link>
                                                         </div>
 
-                                                        <Link
-                                                            href={`/hangars/${selectedOwnedHangar._id}`}
-                                                            className="mb-5 inline-flex w-full items-center justify-center rounded-full bg-cyan-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
-                                                        >
-                                                            Ir al hangar y ver aeronaves
-                                                        </Link>
-
-                                                        <div className="flex-1 space-y-3">
-                                                            {ownedPendientes.length > 0 ? (
-                                                                ownedPendientes.map(
-                                                                    (task) => (
-                                                                        <Link
-                                                                            key={task.taskId}
-                                                                            href={`/hangars/${task.hangarId}/aircraft/${task.aircraftId}`}
-                                                                            className="group block rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 hover:shadow-sm"
-                                                                        >
-                                                                            <div className="flex items-start justify-between gap-3">
-                                                                                <div>
-                                                                                    <p className="font-medium text-slate-800 group-hover:text-amber-900">
-                                                                                        {task.title}
+                                                        {ownedPanelTab ===
+                                                        "pending" ? (
+                                                            <div className="flex-1 space-y-3">
+                                                                    {ownedPendientes.length > 0 ? (
+                                                                        ownedPendientes.map(
+                                                                            (task) => (
+                                                                                <Link
+                                                                                    key={task.taskId}
+                                                                                    href={`/hangars/${task.hangarId}/aircraft/${task.aircraftId}`}
+                                                                                    className="group block rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50 hover:shadow-sm"
+                                                                                >
+                                                                                    <div className="flex items-start justify-between gap-3">
+                                                                                        <div>
+                                                                                            <p className="font-medium text-slate-800 group-hover:text-amber-900">
+                                                                                                {task.title}
+                                                                                            </p>
+                                                                                            <p className="mt-1 text-xs text-slate-500">
+                                                                                                {task.taskType}
+                                                                                                {" · "}
+                                                                                                {task.aircraftRegistration}
+                                                                                                {task.description
+                                                                                                    ? ` · ${task.description}`
+                                                                                                    : ""}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                        <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                                                                            Ver aeronave
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </Link>
+                                                                            )
+                                                                        )
+                                                                    ) : (
+                                                                        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                                                                            No hay trabajos de
+                                                                            mantenimiento pendientes
+                                                                            en este hangar.
+                                                                        </div>
+                                                                    )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex-1 space-y-3">
+                                                                {selectedOwnedHangar.members
+                                                                    ?.length > 0 ? (
+                                                                    selectedOwnedHangar.members.map(
+                                                                        (member) => (
+                                                                            <div
+                                                                                key={
+                                                                                    member.userId
+                                                                                }
+                                                                                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4"
+                                                                            >
+                                                                                <div className="min-w-0">
+                                                                                    <p className="truncate font-medium text-slate-900">
+                                                                                        {
+                                                                                            member.displayLabel
+                                                                                        }
                                                                                     </p>
+                                                                                    {member.name &&
+                                                                                        member.displayLabel !==
+                                                                                            member.name && (
+                                                                                            <p className="mt-1 truncate text-xs text-slate-500">
+                                                                                                {
+                                                                                                    member.name
+                                                                                                }
+                                                                                            </p>
+                                                                                        )}
                                                                                     <p className="mt-1 text-xs text-slate-500">
-                                                                                        {task.taskType}
+                                                                                        {formatMemberRole(
+                                                                                            member.role
+                                                                                        )}
                                                                                         {" · "}
-                                                                                        {task.aircraftRegistration}
-                                                                                        {task.description
-                                                                                            ? ` · ${task.description}`
-                                                                                            : ""}
+                                                                                        Se unió el{" "}
+                                                                                        {formatJoinedDate(
+                                                                                            member.joinedAt
+                                                                                        )}
                                                                                     </p>
                                                                                 </div>
-                                                                                <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
-                                                                                    Ver aeronave
-                                                                                </span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() =>
+                                                                                        setMemberToRemove(
+                                                                                            {
+                                                                                                hangarId:
+                                                                                                    selectedOwnedHangar._id,
+                                                                                                hangarName:
+                                                                                                    selectedOwnedHangar.name,
+                                                                                                member,
+                                                                                            }
+                                                                                        )
+                                                                                    }
+                                                                                    className="shrink-0 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100"
+                                                                                >
+                                                                                    Expulsar
+                                                                                </button>
                                                                             </div>
-                                                                        </Link>
+                                                                        )
                                                                     )
-                                                                )
-                                                            ) : (
-                                                                <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
-                                                                    No hay trabajos de
-                                                                    mantenimiento pendientes
-                                                                    en este hangar.
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                                ) : (
+                                                                    <div className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">
+                                                                        Este hangar aún no tiene
+                                                                        miembros. Comparte el código
+                                                                        de invitación para que se
+                                                                        unan.
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <div className="flex min-h-80 items-center justify-center rounded-2xl border border-dashed border-cyan-200 bg-cyan-50 p-8 text-center text-sm text-cyan-800">
-                                                        Selecciona un hangar para ver sus
-                                                        pendientes.
+                                                        Selecciona un hangar para ver su
+                                                        información.
                                                     </div>
                                                 )}
                                             </div>
@@ -922,9 +1185,16 @@ export default function HangarsPage() {
                                                         <p className="text-xs uppercase tracking-[0.24em] text-amber-700/80">
                                                             Hangar
                                                         </p>
-                                                        <h3 className="mt-2 text-lg font-semibold text-slate-950">
-                                                            {hangar.name}
-                                                        </h3>
+                                                        <div className="mt-2 flex items-start justify-between gap-3">
+                                                            <h3 className="min-w-0 text-lg font-semibold text-slate-950">
+                                                                {hangar.name}
+                                                            </h3>
+                                                            {hangar.classification && (
+                                                                <span className="shrink-0 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600">
+                                                                    {hangar.classification}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="mt-1 text-sm text-slate-500">
                                                             {hangar.location ||
                                                                 "Sin ubicación"}
@@ -936,11 +1206,6 @@ export default function HangarsPage() {
                                                                     {hangar.baseAirport}
                                                                 </span>
                                                             </p>
-                                                        )}
-                                                        {hangar.classification && (
-                                                            <span className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600">
-                                                                {hangar.classification}
-                                                            </span>
                                                         )}
                                                     </button>
                                                 ))}
@@ -954,7 +1219,7 @@ export default function HangarsPage() {
                                                 {selectedMemberHangar ? (
                                                     <div className="flex min-h-80 flex-col rounded-2xl border border-slate-200 bg-slate-50 p-5">
                                                         <div className="mb-4 flex items-start justify-between gap-4">
-                                                            <div>
+                                                            <div className="min-w-0 flex-1">
                                                                 <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
                                                                     Pendientes
                                                                 </p>
@@ -965,22 +1230,91 @@ export default function HangarsPage() {
                                                                     Actividades que requieren
                                                                     atención en este hangar.
                                                                 </p>
+                                                                <span className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+                                                                    {memberPendientes.length}{" "}
+                                                                    pendiente
+                                                                    {memberPendientes.length === 1
+                                                                        ? ""
+                                                                        : "s"}
+                                                                </span>
                                                             </div>
-                                                            <span className="rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-                                                                {memberPendientes.length}{" "}
-                                                                pendiente
-                                                                {memberPendientes.length === 1
-                                                                    ? ""
-                                                                    : "s"}
-                                                            </span>
-                                                        </div>
 
-                                                        <Link
-                                                            href={`/hangars/${selectedMemberHangar._id}`}
-                                                            className="mb-5 inline-flex w-full items-center justify-center rounded-full bg-amber-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-amber-400"
-                                                        >
-                                                            Ir al hangar y ver aeronaves
-                                                        </Link>
+                                                            <div
+                                                                className="relative shrink-0"
+                                                                ref={memberActionsMenuRef}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setMemberActionsMenuOpen(
+                                                                            (open) => !open
+                                                                        )
+                                                                    }
+                                                                    aria-label="Opciones del hangar"
+                                                                    aria-expanded={
+                                                                        memberActionsMenuOpen
+                                                                    }
+                                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                                                                >
+                                                                    <svg
+                                                                        className="h-4 w-4"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            strokeWidth={2}
+                                                                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                                                        />
+                                                                    </svg>
+                                                                </button>
+
+                                                                {memberActionsMenuOpen && (
+                                                                    <div className="absolute right-0 top-full z-10 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                                                                        <Link
+                                                                            href={`/hangars/${selectedMemberHangar._id}`}
+                                                                            onClick={() =>
+                                                                                setMemberActionsMenuOpen(
+                                                                                    false
+                                                                                )
+                                                                            }
+                                                                            className="flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
+                                                                        >
+                                                                            Ir al hangar
+                                                                            <svg
+                                                                                className="h-4 w-4 text-amber-700"
+                                                                                fill="none"
+                                                                                stroke="currentColor"
+                                                                                viewBox="0 0 24 24"
+                                                                            >
+                                                                                <path
+                                                                                    strokeLinecap="round"
+                                                                                    strokeLinejoin="round"
+                                                                                    strokeWidth={2}
+                                                                                    d="M9 5l7 7-7 7"
+                                                                                />
+                                                                            </svg>
+                                                                        </Link>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setMemberActionsMenuOpen(
+                                                                                    false
+                                                                                );
+                                                                                setHangarToLeave(
+                                                                                    selectedMemberHangar
+                                                                                );
+                                                                            }}
+                                                                            className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                                                                        >
+                                                                            Salir del hangar
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
 
                                                         <div className="flex-1 space-y-3">
                                                             {memberPendientes.length > 0 ? (
@@ -1040,6 +1374,166 @@ export default function HangarsPage() {
                     </div>
                 )}
             </main>
+
+            {memberToRemove && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cerrar confirmación de expulsión"
+                        onClick={() => setMemberToRemove(null)}
+                        className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
+                    />
+
+                    <div className="relative z-10 w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+                        <h2 className="text-xl font-semibold text-slate-950">
+                            ¿Estás seguro?
+                        </h2>
+                        <p className="mt-3 text-sm text-slate-600">
+                            Vas a expulsar a{" "}
+                            <span className="font-semibold text-slate-900">
+                                {memberToRemove.member.displayLabel}
+                            </span>{" "}
+                            del hangar{" "}
+                            <span className="font-semibold text-slate-900">
+                                {memberToRemove.hangarName}
+                            </span>
+                            . Esta acción no se puede deshacer.
+                        </p>
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setMemberToRemove(null)}
+                                className="flex-1 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleRemoveMember}
+                                disabled={isRemovingMember}
+                                className="flex-1 rounded-lg bg-rose-600 px-4 py-2 font-medium text-white transition hover:bg-rose-500 disabled:opacity-70"
+                            >
+                                {isRemovingMember
+                                    ? "Expulsando..."
+                                    : "Sí, expulsar"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {hangarToLeave && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cerrar confirmación de salida"
+                        onClick={() => setHangarToLeave(null)}
+                        className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
+                    />
+
+                    <div className="relative z-10 w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+                        <h2 className="text-xl font-semibold text-slate-950">
+                            ¿Estás seguro?
+                        </h2>
+                        <p className="mt-3 text-sm text-slate-600">
+                            Vas a salir del hangar{" "}
+                            <span className="font-semibold text-slate-900">
+                                {hangarToLeave.name}
+                            </span>
+                            . Ya no podrás acceder a sus aeronaves hasta que te
+                            inviten de nuevo.
+                        </p>
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setHangarToLeave(null)}
+                                className="flex-1 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleLeaveHangar}
+                                disabled={isLeavingHangar}
+                                className="flex-1 rounded-lg bg-rose-600 px-4 py-2 font-medium text-white transition hover:bg-rose-500 disabled:opacity-70"
+                            >
+                                {isLeavingHangar
+                                    ? "Saliendo..."
+                                    : "Sí, salir del hangar"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {session && (
+                <>
+                    {isFabMenuOpen && (
+                        <button
+                            type="button"
+                            aria-label="Cerrar menú de acciones"
+                            onClick={() => setIsFabMenuOpen(false)}
+                            className="fixed inset-0 z-40 bg-slate-950/10"
+                        />
+                    )}
+
+                    <div className="fixed bottom-8 right-5 z-50 sm:bottom-10 sm:right-8">
+                        <div className="relative h-20 w-20">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsFabMenuOpen(false);
+                                    setIsJoinOpen(false);
+                                    setIsFormOpen(true);
+                                }}
+                                className={`absolute bottom-[5.75rem] right-0 whitespace-nowrap rounded-full border border-cyan-200 bg-white px-5 py-3 text-base font-semibold text-cyan-900 shadow-xl transition-all duration-300 hover:bg-cyan-50 ${
+                                    isFabMenuOpen
+                                        ? "pointer-events-auto scale-100 opacity-100"
+                                        : "pointer-events-none scale-75 opacity-0"
+                                }`}
+                            >
+                                Crear hangar
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsFabMenuOpen(false);
+                                    setIsFormOpen(false);
+                                    setIsJoinOpen(true);
+                                }}
+                                className={`absolute bottom-5 right-[7.25rem] whitespace-nowrap rounded-full border border-emerald-200 bg-white px-5 py-3 text-base font-semibold text-emerald-900 shadow-xl transition-all duration-300 hover:bg-emerald-50 ${
+                                    isFabMenuOpen
+                                        ? "pointer-events-auto scale-100 opacity-100"
+                                        : "pointer-events-none scale-75 opacity-0"
+                                }`}
+                            >
+                                Unirse a hangar
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsFabMenuOpen((open) => !open)}
+                                aria-label={
+                                    isFabMenuOpen
+                                        ? "Cerrar menú de hangares"
+                                        : "Abrir menú de hangares"
+                                }
+                                aria-expanded={isFabMenuOpen}
+                                className="relative flex h-20 w-20 items-center justify-center rounded-full bg-cyan-600 text-4xl font-light !text-white shadow-2xl transition duration-300 hover:scale-105 hover:bg-cyan-500"
+                            >
+                                <span
+                                    className={`block leading-none transition-transform duration-300 ${
+                                        isFabMenuOpen ? "rotate-45" : ""
+                                    }`}
+                                >
+                                    +
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

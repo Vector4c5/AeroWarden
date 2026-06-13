@@ -5,10 +5,16 @@ import bcrypt from "bcryptjs";
 import connectDB from "./mongodb";
 import User from "../models/users";
 import { isAdminEmail } from "./admin";
+import {
+    isProfileComplete,
+    isUserAdult,
+    parseLoginIdentifier,
+} from "./userProfile";
 
 export const authOptions = {
     pages: {
-        error: "/",
+        signIn: "/login",
+        error: "/login",
     },
 
     session: {
@@ -16,14 +22,13 @@ export const authOptions = {
     },
 
     providers: [
-
         CredentialsProvider({
             name: "Credentials",
 
             credentials: {
-                email: {
-                    label: "Email",
-                    type: "email",
+                identifier: {
+                    label: "Correo o usuario",
+                    type: "text",
                 },
 
                 password: {
@@ -33,27 +38,27 @@ export const authOptions = {
             },
 
             async authorize(credentials) {
-
                 await connectDB();
 
-                const email = credentials?.email
-                    ?.trim()
-                    .toLowerCase();
+                const login = parseLoginIdentifier(
+                    credentials?.identifier
+                );
 
-                if (!email || !credentials?.password) {
+                if (!login.value || !credentials?.password) {
                     throw new Error(
-                        "Correo y contraseña son requeridos"
+                        "Correo o usuario y contraseña son requeridos"
                     );
                 }
 
-                const user = await User.findOne({
-                    email,
-                });
+                const query =
+                    login.type === "email"
+                        ? { email: login.value }
+                        : { username: login.value };
+
+                const user = await User.findOne(query);
 
                 if (!user) {
-                    throw new Error(
-                        "Usuario no encontrado"
-                    );
+                    throw new Error("Usuario no encontrado");
                 }
 
                 if (!user.password) {
@@ -62,24 +67,24 @@ export const authOptions = {
                     );
                 }
 
-                const isValidPassword =
-                    await bcrypt.compare(
-                        credentials.password,
-                        user.password
-                    );
+                const isValidPassword = await bcrypt.compare(
+                    credentials.password,
+                    user.password
+                );
 
                 if (!isValidPassword) {
+                    throw new Error("Contraseña incorrecta");
+                }
+
+                if (user.dateOfBirth && !isUserAdult(user.dateOfBirth)) {
                     throw new Error(
-                        "Contraseña incorrecta"
+                        "Debes ser mayor de edad para acceder"
                     );
                 }
 
-                await User.findByIdAndUpdate(
-                    user._id,
-                    {
-                        lastLogin: new Date(),
-                    }
-                );
+                await User.findByIdAndUpdate(user._id, {
+                    lastLogin: new Date(),
+                });
 
                 const role = isAdminEmail(user.email)
                     ? "admin"
@@ -95,36 +100,20 @@ export const authOptions = {
         }),
 
         GoogleProvider({
-            clientId:
-                process.env.GOOGLE_ID,
-
-            clientSecret:
-                process.env.GOOGLE_SECRET,
+            clientId: process.env.GOOGLE_ID,
+            clientSecret: process.env.GOOGLE_SECRET,
         }),
     ],
 
     callbacks: {
-
-        async signIn({
-            user,
-            account,
-            profile,
-        }) {
-
-            if (
-                account?.provider !==
-                "google"
-            ) {
+        async signIn({ user, account, profile }) {
+            if (account?.provider !== "google") {
                 return true;
             }
 
             await connectDB();
 
-            const email = (
-                user?.email ||
-                profile?.email ||
-                ""
-            )
+            const email = (user?.email || profile?.email || "")
                 .trim()
                 .toLowerCase();
 
@@ -132,75 +121,72 @@ export const authOptions = {
                 return false;
             }
 
-            const name =
-                user?.name ||
-                profile?.name ||
-                "";
+            const name = user?.name || profile?.name || "";
 
-            const existingUser =
-                await User.findOne({
-                    email,
-                });
+            const existingUser = await User.findOne({
+                email,
+            });
+
+            if (
+                existingUser?.dateOfBirth &&
+                !isUserAdult(existingUser.dateOfBirth)
+            ) {
+                return "/login?error=minor";
+            }
 
             const role = isAdminEmail(email)
                 ? "admin"
                 : existingUser?.role || "user";
 
             if (!existingUser) {
-
                 await User.create({
                     name,
                     email,
-                    image:
-                        user?.image ||
-                        null,
+                    image: user?.image || null,
                     role,
-                    lastLogin:
-                        new Date(),
+                    lastLogin: new Date(),
                 });
-
             } else {
-
-                await User.findByIdAndUpdate(
-                    existingUser._id,
-                    {
-                        $set: {
-                            name,
-                            image:
-                                user?.image ||
-                                existingUser.image,
-                            lastLogin:
-                                new Date(),
-                        },
-                    }
-                );
+                await User.findByIdAndUpdate(existingUser._id, {
+                    $set: {
+                        name,
+                        image: user?.image || existingUser.image,
+                        lastLogin: new Date(),
+                    },
+                });
             }
 
             return true;
         },
 
-        async jwt({
-            token,
-            user,
-        }) {
-
-            if (user?.email) {
-
+        async jwt({ token, user, trigger }) {
+            if (user?.email || trigger === "update") {
                 await connectDB();
 
-                const dbUser =
-                    await User.findOne({
-                        email:
-                            user.email
-                                .trim()
-                                .toLowerCase(),
-                    }).lean();
+                const email = (user?.email || token.email || "")
+                    .trim()
+                    .toLowerCase();
+
+                if (!email) {
+                    return token;
+                }
+
+                const dbUser = await User.findOne({
+                    email,
+                }).lean();
 
                 if (dbUser) {
                     token.id = dbUser._id.toString();
                     token.name = dbUser.name;
                     token.email = dbUser.email;
                     token.image = dbUser.image;
+                    token.username = dbUser.username || "";
+                    token.firstNames = dbUser.firstNames || "";
+                    token.lastNames = dbUser.lastNames || "";
+                    token.dateOfBirth = dbUser.dateOfBirth
+                        ? dbUser.dateOfBirth.toISOString()
+                        : null;
+                    token.profileComplete = isProfileComplete(dbUser);
                     token.role = isAdminEmail(dbUser.email)
                         ? "admin"
                         : dbUser.role || "user";
@@ -210,16 +196,19 @@ export const authOptions = {
             return token;
         },
 
-        async session({
-            session,
-            token,
-        }) {
-
+        async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id;
                 session.user.name = token.name;
                 session.user.email = token.email;
                 session.user.image = token.image;
+                session.user.username = token.username || "";
+                session.user.firstNames = token.firstNames || "";
+                session.user.lastNames = token.lastNames || "";
+                session.user.dateOfBirth = token.dateOfBirth || null;
+                session.user.profileComplete = Boolean(
+                    token.profileComplete
+                );
                 session.user.role = token.role || "user";
             }
 
@@ -227,6 +216,5 @@ export const authOptions = {
         },
     },
 
-    secret:
-        process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET,
 };

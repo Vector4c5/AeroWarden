@@ -9,6 +9,7 @@ import {
     isInviteCodeExpired,
     isInviteCodeVisible,
 } from "../../../lib/hangarInvite";
+import { formatHangarMember } from "../../../lib/userProfile";
 
 async function rotateExpiredInviteCode(hangar) {
     if (!isInviteCodeExpired(hangar)) {
@@ -29,9 +30,12 @@ async function rotateExpiredInviteCode(hangar) {
 
 function formatHangarForUser(hangar, userId) {
     const ownerId = hangar.owner?._id?.toString() || hangar.owner?.toString();
-    const member = hangar.members?.find(
-        (entry) => entry.user.toString() === userId
-    );
+    const member = hangar.members?.find((entry) => {
+        const memberUserId =
+            entry.user?._id?.toString() || entry.user?.toString();
+
+        return memberUserId === userId?.toString();
+    });
     const isOwner = ownerId === userId?.toString();
 
     const formattedHangar = {
@@ -40,6 +44,7 @@ function formatHangarForUser(hangar, userId) {
         role: isOwner ? "owner" : member?.role || null,
         inviteCodeVisible: false,
         inviteCodeExpiresAt: hangar.inviteCodeExpiresAt || null,
+        members: hangar.members?.map(formatHangarMember) || [],
     };
 
     if (isOwner && isInviteCodeVisible(hangar)) {
@@ -186,7 +191,11 @@ async function handler(req, res) {
             })
                 .populate(
                     "owner",
-                    "name email"
+                    "name email username firstNames lastNames"
+                )
+                .populate(
+                    "members.user",
+                    "name email username firstNames lastNames"
                 )
                 .lean();
 
@@ -216,11 +225,108 @@ async function handler(req, res) {
 
         if (req.method === "PATCH") {
             const { id } = req.query;
-            const { action } = req.body;
+            const { action, memberUserId } = req.body;
 
             if (!id) {
                 return res.status(400).json({
                     error: "Falta el id del hangar",
+                });
+            }
+
+            if (action === "remove_member") {
+                if (!memberUserId) {
+                    return res.status(400).json({
+                        error: "Falta el usuario a expulsar",
+                    });
+                }
+
+                const hangar = await Hangar.findOne({
+                    _id: id,
+                    owner: session.user.id,
+                });
+
+                if (!hangar) {
+                    return res.status(404).json({
+                        error:
+                            "Hangar no encontrado o no tienes permisos",
+                    });
+                }
+
+                if (memberUserId === session.user.id) {
+                    return res.status(400).json({
+                        error: "No puedes expulsarte a ti mismo como propietario",
+                    });
+                }
+
+                const memberExists = hangar.members.some(
+                    (entry) =>
+                        entry.user.toString() === memberUserId
+                );
+
+                if (!memberExists) {
+                    return res.status(404).json({
+                        error: "Este usuario no forma parte del hangar",
+                    });
+                }
+
+                hangar.members = hangar.members.filter(
+                    (entry) =>
+                        entry.user.toString() !== memberUserId
+                );
+
+                await hangar.save();
+
+                const updatedHangar = await Hangar.findById(hangar._id)
+                    .populate(
+                        "owner",
+                        "name email username firstNames lastNames"
+                    )
+                    .populate(
+                        "members.user",
+                        "name email username firstNames lastNames"
+                    )
+                    .lean();
+
+                return res.status(200).json({
+                    ...formatHangarForUser(
+                        updatedHangar,
+                        session.user.id
+                    ),
+                    message: "Miembro expulsado correctamente",
+                });
+            }
+
+            if (action === "leave_hangar") {
+                const hangar = await Hangar.findOne({
+                    _id: id,
+                    "members.user": session.user.id,
+                });
+
+                if (!hangar) {
+                    return res.status(404).json({
+                        error:
+                            "Hangar no encontrado o no formas parte de él",
+                    });
+                }
+
+                if (hangar.owner.toString() === session.user.id) {
+                    return res.status(400).json({
+                        error:
+                            "El propietario no puede salir del hangar. Debes eliminarlo o transferirlo.",
+                    });
+                }
+
+                hangar.members = hangar.members.filter(
+                    (entry) =>
+                        entry.user.toString() !== session.user.id
+                );
+
+                await hangar.save();
+
+                return res.status(200).json({
+                    success: true,
+                    hangarId: id,
+                    message: "Has salido del hangar correctamente",
                 });
             }
 

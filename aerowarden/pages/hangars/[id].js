@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 
 import Header from "@/Componets/common/Header";
 import { notifyError, notifySuccess } from "@/lib/notifications";
 import { PENDING_TASK_TYPES } from "@/lib/pendingTaskTypes";
+import { buildDisplayName } from "@/lib/userProfile";
 
 const HANGAR_CLASSIFICATIONS = [
     "Mantenimiento",
@@ -51,10 +52,10 @@ const emptyMaintenanceTask = () => ({
     taskType: "Mantenimiento",
 });
 
-const getEmptyAircraftForm = (userName = "") => ({
-    intakeReportByName: userName,
+const getEmptyAircraftForm = () => ({
     registration: "",
     manufacturer: "",
+    model: "",
     serialNumber: "",
     aircraftType: "Ala fija",
     stayReason: "Mantenimiento",
@@ -111,30 +112,52 @@ function filterAircraftByTab(aircraftList, tabId) {
     return aircraftList.filter((aircraft) => isInHangar(aircraft));
 }
 
-function filterAircraftByRegistration(aircraftList, query) {
-    const normalizedQuery = query.trim().toUpperCase();
+function normalizeSearchText(value) {
+    return (value || "").toUpperCase().replace(/[\s-_.]/g, "");
+}
+
+function matchesRegistrationSearch(registration, query) {
+    const normalizedRegistration = normalizeSearchText(registration);
+    const normalizedQuery = normalizeSearchText(query);
 
     if (!normalizedQuery) {
+        return true;
+    }
+
+    if (!normalizedRegistration) {
+        return false;
+    }
+
+    if (normalizedRegistration.includes(normalizedQuery)) {
+        return true;
+    }
+
+    let queryIndex = 0;
+
+    for (
+        let index = 0;
+        index < normalizedRegistration.length &&
+        queryIndex < normalizedQuery.length;
+        index += 1
+    ) {
+        if (normalizedRegistration[index] === normalizedQuery[queryIndex]) {
+            queryIndex += 1;
+        }
+    }
+
+    return queryIndex === normalizedQuery.length;
+}
+
+function filterAircraftByRegistration(aircraftList, query) {
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery) {
         return aircraftList;
     }
 
     return aircraftList.filter((aircraft) =>
-        aircraft.registration?.toUpperCase().includes(normalizedQuery)
+        matchesRegistrationSearch(aircraft.registration, trimmedQuery)
     );
-}
-
-function formatDateTime(value) {
-    if (!value) {
-        return "Sin fecha";
-    }
-
-    return new Date(value).toLocaleString("es-MX", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
 }
 
 export default function HangarDetailPage() {
@@ -163,6 +186,9 @@ export default function HangarDetailPage() {
         exitReportByName: "",
         exitNote: "",
     });
+    const [hangarActionsMenuOpen, setHangarActionsMenuOpen] = useState(false);
+    const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
+    const hangarActionsMenuRef = useRef(null);
 
     const isOwner = hangar?.isOwner === true;
 
@@ -195,10 +221,17 @@ export default function HangarDetailPage() {
         [hangarAircraft]
     );
 
+    const intakeReporterName = useMemo(
+        () =>
+            buildDisplayName(
+                session?.user?.firstNames,
+                session?.user?.lastNames
+            ) || session?.user?.name || "",
+        [session]
+    );
+
     const openAircraftModal = () => {
-        setAircraftForm(
-            getEmptyAircraftForm(session?.user?.name || "")
-        );
+        setAircraftForm(getEmptyAircraftForm());
         setIsAircraftModalOpen(true);
     };
 
@@ -344,6 +377,33 @@ export default function HangarDetailPage() {
         isExitModalOpen,
     ]);
 
+    useEffect(() => {
+        if (isAircraftModalOpen) {
+            setIsFabMenuOpen(false);
+        }
+    }, [isAircraftModalOpen]);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (
+                hangarActionsMenuRef.current &&
+                !hangarActionsMenuRef.current.contains(event.target)
+            ) {
+                setHangarActionsMenuOpen(false);
+            }
+        }
+
+        if (!hangarActionsMenuOpen) {
+            return undefined;
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [hangarActionsMenuOpen]);
+
     const handleCreateAircraft = async (e) => {
         e.preventDefault();
         setSavingAircraft(true);
@@ -355,6 +415,15 @@ export default function HangarDetailPage() {
 
         if (!resolvedStayReason) {
             notifyError("Debes indicar la razón de estancia");
+            setSavingAircraft(false);
+            return;
+        }
+
+        if (!intakeReporterName) {
+            notifyError(
+                "Completa tu perfil con nombres y apellidos antes de registrar una aeronave"
+            );
+            setSavingAircraft(false);
             return;
         }
 
@@ -366,9 +435,10 @@ export default function HangarDetailPage() {
                 },
                 body: JSON.stringify({
                     hangarId: id,
-                    intakeReportByName: aircraftForm.intakeReportByName,
+                    intakeReportByName: intakeReporterName,
                     registration: aircraftForm.registration,
                     manufacturer: aircraftForm.manufacturer,
+                    model: aircraftForm.model,
                     serialNumber: aircraftForm.serialNumber,
                     aircraftType: aircraftForm.aircraftType,
                     stayReason: resolvedStayReason,
@@ -542,14 +612,21 @@ export default function HangarDetailPage() {
                 ) : hangar ? (
                     <div className="space-y-8">
                         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                                <div>
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="min-w-0 flex-1">
                                     <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80">
                                         Hangar
                                     </p>
-                                    <h1 className="mt-2 text-3xl font-semibold text-slate-950">
-                                        {hangar.name}
-                                    </h1>
+                                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                                        <h1 className="text-3xl font-semibold text-slate-950">
+                                            {hangar.name}
+                                        </h1>
+                                        {hangar.classification && (
+                                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
+                                                {hangar.classification}
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="mt-2 text-sm text-slate-600">
                                         {hangar.location || "Sin ubicación"}
                                     </p>
@@ -561,53 +638,84 @@ export default function HangarDetailPage() {
                                             </span>
                                         </p>
                                     )}
-                                    {hangar.classification && (
-                                        <span className="mt-3 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
-                                            {hangar.classification}
-                                        </span>
-                                    )}
                                     {hangar.description && (
-                                        <p className="mt-3 max-w-2xl text-sm text-slate-500">
-                                            {hangar.description}
-                                        </p>
+                                        <div className="mt-4 max-w-2xl">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                                Descripción
+                                            </p>
+                                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                                {hangar.description}
+                                            </p>
+                                        </div>
                                     )}
                                     <p className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
                                         {isOwner ? "Propietario" : "Miembro"}
                                     </p>
                                 </div>
 
-                                <div className="flex flex-wrap gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={openAircraftModal}
-                                        className="inline-flex items-center justify-center rounded-full bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-500"
+                                {isOwner && (
+                                    <div
+                                        className="relative shrink-0 self-start"
+                                        ref={hangarActionsMenuRef}
                                     >
-                                        Registrar ingreso de aeronave
-                                    </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setHangarActionsMenuOpen(
+                                                    (open) => !open
+                                                )
+                                            }
+                                            aria-label="Opciones del hangar"
+                                            aria-expanded={hangarActionsMenuOpen}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                                        >
+                                            <svg
+                                                className="h-4 w-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                                />
+                                            </svg>
+                                        </button>
 
-                                    {isOwner && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setIsEditModalOpen(true)
-                                                }
-                                                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
-                                            >
-                                                Modificar hangar
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setIsDeleteModalOpen(true)
-                                                }
-                                                className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
-                                            >
-                                                Borrar hangar
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
+                                        {hangarActionsMenuOpen && (
+                                            <div className="absolute right-0 top-full z-10 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setHangarActionsMenuOpen(
+                                                            false
+                                                        );
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-slate-800 transition hover:bg-slate-50"
+                                                >
+                                                    Modificar hangar
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setHangarActionsMenuOpen(
+                                                            false
+                                                        );
+                                                        setIsDeleteModalOpen(
+                                                            true
+                                                        );
+                                                    }}
+                                                    className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                                                >
+                                                    Borrar hangar
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </section>
 
@@ -618,7 +726,8 @@ export default function HangarDetailPage() {
                                         Aeronaves del hangar
                                     </h2>
                                     <p className="mt-1 text-sm text-slate-500">
-                                        Busca por matrícula y filtra aeronaves
+                                        Busca por matrícula completa o por
+                                        algunas letras y filtra aeronaves
                                         activas, con pendientes o que ya
                                         salieron de {hangar.name}.
                                     </p>
@@ -650,7 +759,7 @@ export default function HangarDetailPage() {
                                                 e.target.value
                                             )
                                         }
-                                        placeholder="Ej. XA-ABC"
+                                        placeholder="Ej. XA, ABC o parte de la matrícula"
                                         className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-4 pr-10 text-slate-900 outline-none transition focus:border-cyan-400"
                                     />
                                     {aircraftSearchQuery && (
@@ -700,107 +809,49 @@ export default function HangarDetailPage() {
                                 filteredAircraft.length > 0 ? (
                                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                                         {filteredAircraft.map((aircraft) => {
-                                            const pendingCount =
-                                                getPendingCount(aircraft);
                                             const isDeparted =
                                                 aircraft.status === "Salida";
 
                                             return (
                                                 <article
                                                     key={aircraft._id}
-                                                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                                    className="flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                                                 >
-                                                    <div className="flex items-start justify-between gap-3">
+                                                    <div>
                                                         <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80">
                                                             Aeronave
                                                         </p>
-                                                        <span
-                                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                                isDeparted
-                                                                    ? "border border-slate-300 bg-slate-200 text-slate-700"
-                                                                    : "border border-cyan-200 bg-cyan-50 text-cyan-800"
-                                                            }`}
-                                                        >
-                                                            {aircraft.status ||
-                                                                "En hangar"}
-                                                        </span>
+                                                        <h3 className="mt-1 text-xl font-semibold text-slate-950">
+                                                            {aircraft.registration}
+                                                        </h3>
                                                     </div>
-                                                    <h3 className="mt-2 text-xl font-semibold text-slate-950">
-                                                        {aircraft.registration}
-                                                    </h3>
-                                                    <p className="mt-1 text-sm text-slate-600">
-                                                        {aircraft.manufacturer ||
-                                                            aircraft.model}
-                                                    </p>
-                                                    <p className="mt-2 text-xs text-slate-500">
-                                                        Serie:{" "}
-                                                        {aircraft.serialNumber}
-                                                    </p>
-                                                    <p className="mt-1 text-xs text-slate-500">
-                                                        Tipo:{" "}
-                                                        {aircraft.aircraftType}
-                                                    </p>
-                                                    <p className="mt-1 text-xs text-slate-500">
-                                                        Estancia:{" "}
-                                                        {aircraft.stayReason}
-                                                    </p>
-                                                    {aircraft.entryDate && (
-                                                        <p className="mt-1 text-xs text-slate-500">
-                                                            Ingreso:{" "}
-                                                            {new Date(
-                                                                aircraft.entryDate
-                                                            ).toLocaleDateString(
-                                                                "es-MX"
-                                                            )}
+
+                                                    <div className="mt-4 space-y-1 text-sm text-slate-600">
+                                                        <p>
+                                                            <span className="font-medium text-slate-700">
+                                                                Estancia:
+                                                            </span>{" "}
+                                                            {aircraft.stayReason ||
+                                                                "Sin especificar"}
                                                         </p>
-                                                    )}
-                                                    {isDeparted &&
-                                                        aircraft.exitDate && (
-                                                            <p className="mt-1 text-xs text-slate-500">
-                                                                Salida:{" "}
-                                                                {formatDateTime(
-                                                                    aircraft.exitDate
-                                                                )}
-                                                            </p>
-                                                        )}
-                                                    {isDeparted &&
-                                                        aircraft.exitReportByName && (
-                                                            <p className="mt-1 text-xs text-slate-500">
-                                                                Salida registrada
-                                                                por:{" "}
-                                                                {
-                                                                    aircraft.exitReportByName
-                                                                }
-                                                            </p>
-                                                        )}
-                                                    <p className="mt-3 text-xs text-slate-500">
-                                                        Reporte por:{" "}
-                                                        {
-                                                            aircraft.intakeReportByName
-                                                        }
-                                                    </p>
-                                                    {pendingCount > 0 &&
-                                                        !isDeparted && (
-                                                            <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                                                                {pendingCount}{" "}
-                                                                pendiente
-                                                                {pendingCount ===
-                                                                1
-                                                                    ? ""
-                                                                    : "s"}
-                                                            </p>
-                                                        )}
-                                                    {isDeparted &&
-                                                        aircraft.exitNote && (
-                                                            <p className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-600">
-                                                                {aircraft.exitNote}
-                                                            </p>
-                                                        )}
+                                                        <p>
+                                                            <span className="font-medium text-slate-700">
+                                                                Fecha de ingreso:
+                                                            </span>{" "}
+                                                            {aircraft.entryDate
+                                                                ? new Date(
+                                                                      aircraft.entryDate
+                                                                  ).toLocaleDateString(
+                                                                      "es-MX"
+                                                                  )
+                                                                : "Sin fecha"}
+                                                        </p>
+                                                    </div>
 
                                                     <div className="mt-4 space-y-2">
                                                         <Link
                                                             href={`/hangars/${id}/aircraft/${aircraft._id}`}
-                                                            className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                                                            className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-medium !text-white transition hover:bg-slate-800"
                                                         >
                                                             Ver historial completo
                                                         </Link>
@@ -826,7 +877,7 @@ export default function HangarDetailPage() {
                                     <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
                                         {aircraftSearchQuery.trim() &&
                                         tabFilteredAircraft.length > 0
-                                            ? `No se encontró ninguna aeronave con la matrícula "${aircraftSearchQuery.trim().toUpperCase()}".`
+                                            ? `No se encontró ninguna aeronave parecida a "${aircraftSearchQuery.trim()}".`
                                             : aircraftViewTab === "pending"
                                               ? "No hay aeronaves con pendientes en este hangar."
                                               : aircraftViewTab === "departed"
@@ -896,16 +947,14 @@ export default function HangarDetailPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={aircraftForm.intakeReportByName}
-                                        onChange={(e) =>
-                                            setAircraftForm((current) => ({
-                                                ...current,
-                                                intakeReportByName: e.target.value,
-                                            }))
-                                        }
-                                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
-                                        required
+                                        value={intakeReporterName}
+                                        readOnly
+                                        className="w-full rounded-lg border border-slate-200 bg-slate-100 p-3 text-slate-600"
                                     />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Se toma de los nombres y apellidos de tu
+                                        perfil.
+                                    </p>
                                 </div>
 
                                 <div>
@@ -938,6 +987,24 @@ export default function HangarDetailPage() {
                                             setAircraftForm((current) => ({
                                                 ...current,
                                                 manufacturer: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                                        Modelo
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={aircraftForm.model}
+                                        onChange={(e) =>
+                                            setAircraftForm((current) => ({
+                                                ...current,
+                                                model: e.target.value,
                                             }))
                                         }
                                         className="w-full rounded-lg border border-slate-200 bg-white p-3 text-slate-900 outline-none transition focus:border-cyan-400"
@@ -1522,7 +1589,9 @@ export default function HangarDetailPage() {
                                 {selectedAircraftForExit.registration}
                             </h3>
                             <p className="mt-1 text-sm text-slate-600">
-                                {selectedAircraftForExit.manufacturer}
+                                {[selectedAircraftForExit.manufacturer, selectedAircraftForExit.model]
+                                    .filter(Boolean)
+                                    .join(" · ")}
                             </p>
                         </div>
 
@@ -1584,6 +1653,58 @@ export default function HangarDetailPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {session && hangar && (
+                <>
+                    {isFabMenuOpen && (
+                        <button
+                            type="button"
+                            aria-label="Cerrar menú de acciones"
+                            onClick={() => setIsFabMenuOpen(false)}
+                            className="fixed inset-0 z-40 bg-slate-950/10"
+                        />
+                    )}
+
+                    <div className="fixed bottom-8 right-5 z-50 sm:bottom-10 sm:right-8">
+                        <div className="relative h-20 w-20">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsFabMenuOpen(false);
+                                    openAircraftModal();
+                                }}
+                                className={`absolute bottom-[5.75rem] right-0 whitespace-nowrap rounded-full border border-cyan-200 bg-white px-5 py-3 text-base font-semibold text-cyan-900 shadow-xl transition-all duration-300 hover:bg-cyan-50 ${
+                                    isFabMenuOpen
+                                        ? "pointer-events-auto scale-100 opacity-100"
+                                        : "pointer-events-none scale-75 opacity-0"
+                                }`}
+                            >
+                                Registrar aeronave
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsFabMenuOpen((open) => !open)}
+                                aria-label={
+                                    isFabMenuOpen
+                                        ? "Cerrar menú de aeronaves"
+                                        : "Abrir menú de aeronaves"
+                                }
+                                aria-expanded={isFabMenuOpen}
+                                className="relative flex h-20 w-20 items-center justify-center rounded-full bg-cyan-600 text-4xl font-light !text-white shadow-2xl transition duration-300 hover:scale-105 hover:bg-cyan-500"
+                            >
+                                <span
+                                    className={`block leading-none transition-transform duration-300 ${
+                                        isFabMenuOpen ? "rotate-45" : ""
+                                    }`}
+                                >
+                                    +
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

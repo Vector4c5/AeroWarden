@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 
 import Header from "@/Componets/common/Header";
+import AircraftReportPreview from "@/Componets/aircraft/AircraftReportPreview";
 import { notifyError, notifySuccess } from "@/lib/notifications";
+import {
+    buildAircraftReportData,
+    downloadAircraftReportPdf,
+    getReportPrintedBy,
+} from "@/lib/aircraftReport";
 import {
     filterByPendingTaskType,
     getPendingTaskType,
@@ -65,7 +71,7 @@ function ActivityCard({
     return (
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-                <h3 className="text-base font-semibold text-slate-950">
+                <h3 className="text-base font-semibold text-slate-800">
                     {title}
                 </h3>
                 {badge && (
@@ -169,6 +175,10 @@ export default function AircraftDetailPage() {
         title: "",
         description: "",
     });
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+    const [aircraftActionsMenuOpen, setAircraftActionsMenuOpen] = useState(false);
+    const aircraftActionsMenuRef = useRef(null);
 
     const isDeparted = aircraft?.status === "Salida";
 
@@ -198,6 +208,16 @@ export default function AircraftDetailPage() {
                 (task) => task.status === "completed"
             ) || [],
         [aircraft]
+    );
+
+    const reportData = useMemo(
+        () =>
+            buildAircraftReportData({
+                aircraft,
+                hangarName,
+                printedBy: getReportPrintedBy(session),
+            }),
+        [aircraft, hangarName, session]
     );
 
     useEffect(() => {
@@ -237,7 +257,8 @@ export default function AircraftDetailPage() {
             isCompleteModalOpen ||
             isExitModalOpen ||
             isAddPendingModalOpen ||
-            isAddObservationModalOpen;
+            isAddObservationModalOpen ||
+            isReportModalOpen;
 
         if (!isModalOpen) {
             return;
@@ -253,7 +274,29 @@ export default function AircraftDetailPage() {
         isExitModalOpen,
         isAddPendingModalOpen,
         isAddObservationModalOpen,
+        isReportModalOpen,
     ]);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (
+                aircraftActionsMenuRef.current &&
+                !aircraftActionsMenuRef.current.contains(event.target)
+            ) {
+                setAircraftActionsMenuOpen(false);
+            }
+        }
+
+        if (!aircraftActionsMenuOpen) {
+            return undefined;
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [aircraftActionsMenuOpen]);
 
     const openCompleteModal = (task) => {
         setSelectedTask(task);
@@ -341,6 +384,25 @@ export default function AircraftDetailPage() {
             title: "",
             description: "",
         });
+    };
+
+    const handleDownloadReport = async () => {
+        if (!reportData) {
+            return;
+        }
+
+        setIsDownloadingReport(true);
+
+        try {
+            await downloadAircraftReportPdf(reportData);
+            notifySuccess("Reporte PDF descargado correctamente");
+        } catch (error) {
+            notifyError(
+                error.message || "No se pudo generar el reporte PDF"
+            );
+        } finally {
+            setIsDownloadingReport(false);
+        }
     };
 
     const handleAddPending = async (e) => {
@@ -460,24 +522,26 @@ export default function AircraftDetailPage() {
             <Header />
 
             <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
-                <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                    <Link
-                        href="/hangars"
-                        className="font-medium text-cyan-700 transition hover:text-cyan-800"
-                    >
-                        Hangares
-                    </Link>
-                    <span>/</span>
+                <div className="mb-6">
                     <Link
                         href={`/hangars/${hangarId}`}
-                        className="font-medium text-cyan-700 transition hover:text-cyan-800"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium !text-cyan-700 transition hover:!text-cyan-800"
                     >
-                        {hangarName || "Hangar"}
+                        <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                        Regresar
                     </Link>
-                    <span>/</span>
-                    <span className="font-medium text-slate-700">
-                        {aircraft?.registration || "Aeronave"}
-                    </span>
                 </div>
 
                 {!session ? (
@@ -490,58 +554,111 @@ export default function AircraftDetailPage() {
                     </div>
                 ) : aircraft ? (
                     <div className="space-y-8">
-                        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-700/80">
+                        <section className="overflow-visible rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-600/90">
                                         Historial de aeronave
                                     </p>
-                                    <h1 className="mt-2 text-3xl font-semibold text-slate-950">
+                                    <h1 className="mt-2 text-2xl font-semibold text-slate-800 sm:text-3xl">
                                         {aircraft.registration}
                                     </h1>
-                                    <p className="mt-2 text-sm text-slate-600">
-                                        {aircraft.manufacturer}
-                                    </p>
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                                            {aircraft.aircraftType}
-                                        </span>
-                                        <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-800">
-                                            {aircraft.status || "En hangar"}
-                                        </span>
-                                        {pendingTasks.length > 0 && (
-                                            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
-                                                {pendingTasks.length} pendiente
-                                                {pendingTasks.length === 1
-                                                    ? ""
-                                                    : "s"}
-                                            </span>
-                                        )}
-                                    </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-3">
-                                    <Link
-                                        href={`/hangars/${hangarId}`}
-                                        className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+                                <div
+                                    className="relative shrink-0"
+                                    ref={aircraftActionsMenuRef}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setAircraftActionsMenuOpen(
+                                                (open) => !open
+                                            )
+                                        }
+                                        aria-label="Opciones de la aeronave"
+                                        aria-expanded={aircraftActionsMenuOpen}
+                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50"
                                     >
-                                        Volver al hangar
-                                    </Link>
-                                    {!isDeparted && (
-                                        <button
-                                            type="button"
-                                            onClick={openExitModal}
-                                            className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                                        <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
                                         >
-                                            Registrar salida
-                                        </button>
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                            />
+                                        </svg>
+                                    </button>
+
+                                    {aircraftActionsMenuOpen && (
+                                        <div className="absolute right-0 top-full z-50 mt-2 w-52 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setAircraftActionsMenuOpen(
+                                                        false
+                                                    );
+                                                    setIsReportModalOpen(true);
+                                                }}
+                                                className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                            >
+                                                Vista previa PDF
+                                            </button>
+                                            {!isDeparted && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAircraftActionsMenuOpen(
+                                                            false
+                                                        );
+                                                        openExitModal();
+                                                    }}
+                                                    className="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                                                >
+                                                    Registrar salida
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
+
+                            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                                    {aircraft.aircraftType}
+                                </span>
+                                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+                                    {aircraft.status || "En hangar"}
+                                </span>
+                                {pendingTasks.length > 0 && (
+                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                                        {pendingTasks.length} pendiente
+                                        {pendingTasks.length === 1 ? "" : "s"}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-3 text-sm text-slate-600">
+                                {[aircraft.manufacturer, aircraft.model]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                            </p>
+                            {hangarName && (
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Hangar:{" "}
+                                    <span className="font-medium text-slate-600">
+                                        {hangarName}
+                                    </span>
+                                </p>
+                            )}
                         </section>
 
-                        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <h2 className="text-xl font-semibold text-slate-950">
+                        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                            <h2 className="text-xl font-semibold text-slate-800">
                                 Datos del ingreso
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
@@ -561,6 +678,10 @@ export default function AircraftDetailPage() {
                                 <InfoItem
                                     label="Fabricante"
                                     value={aircraft.manufacturer}
+                                />
+                                <InfoItem
+                                    label="Modelo"
+                                    value={aircraft.model || "Sin modelo"}
                                 />
                                 <InfoItem
                                     label="Número de serie"
@@ -586,8 +707,8 @@ export default function AircraftDetailPage() {
                         </section>
 
                         {isDeparted && (
-                            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                                <h2 className="text-xl font-semibold text-slate-950">
+                            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Datos de la salida
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -628,11 +749,11 @@ export default function AircraftDetailPage() {
                             </section>
                         )}
 
-                        <div className="grid gap-8 xl:grid-cols-2">
-                            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <h2 className="text-xl font-semibold text-slate-950">
+                        <div className="grid gap-6 xl:grid-cols-2 xl:gap-8">
+                            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                        <h2 className="text-xl font-semibold text-slate-800">
                                             Por realizar
                                         </h2>
                                         <p className="mt-1 text-sm text-slate-500">
@@ -646,7 +767,7 @@ export default function AircraftDetailPage() {
                                             onClick={() =>
                                                 setIsAddPendingModalOpen(true)
                                             }
-                                            className="inline-flex shrink-0 items-center justify-center rounded-full bg-amber-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-amber-400"
+                                            className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-amber-400 px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-amber-300 sm:w-auto"
                                         >
                                             + Agregar pendiente
                                         </button>
@@ -706,7 +827,7 @@ export default function AircraftDetailPage() {
                                                                     task
                                                                 )
                                                             }
-                                                            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                                                            className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium !text-white transition hover:bg-emerald-400 sm:w-auto"
                                                         >
                                                             Marcar como terminado
                                                         </button>
@@ -725,8 +846,8 @@ export default function AircraftDetailPage() {
                                 </div>
                             </section>
 
-                            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                                <h2 className="text-xl font-semibold text-slate-950">
+                            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Realizado
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -777,8 +898,8 @@ export default function AircraftDetailPage() {
                             </section>
                         </div>
 
-                        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <h2 className="text-xl font-semibold text-slate-950">
+                        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                            <h2 className="text-xl font-semibold text-slate-800">
                                 Estado de llegada
                             </h2>
                             <p className="mt-1 text-sm text-slate-500">
@@ -807,10 +928,10 @@ export default function AircraftDetailPage() {
                             </div>
                         </section>
 
-                        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg">
-                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-slate-950">
+                        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                    <h2 className="text-xl font-semibold text-slate-800">
                                         Observaciones de estancia
                                     </h2>
                                     <p className="mt-1 text-sm text-slate-500">
@@ -824,7 +945,7 @@ export default function AircraftDetailPage() {
                                         onClick={() =>
                                             setIsAddObservationModalOpen(true)
                                         }
-                                        className="inline-flex shrink-0 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-800 transition hover:bg-cyan-100"
+                                        className="inline-flex w-full shrink-0 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 transition hover:bg-cyan-100 sm:w-auto"
                                     >
                                         + Agregar observación
                                     </button>
@@ -872,7 +993,7 @@ export default function AircraftDetailPage() {
                     <div className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
                         <div className="mb-5 flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-slate-950">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Registrar salida
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -938,7 +1059,7 @@ export default function AircraftDetailPage() {
                                 <button
                                     type="submit"
                                     disabled={isRegisteringExit}
-                                    className="flex-1 rounded-lg bg-rose-600 px-4 py-2 font-medium text-white transition hover:bg-rose-500 disabled:opacity-70"
+                                    className="flex-1 rounded-lg bg-rose-500 px-4 py-2 font-medium text-white transition hover:bg-rose-400 disabled:opacity-70"
                                 >
                                     {isRegisteringExit
                                         ? "Guardando..."
@@ -962,7 +1083,7 @@ export default function AircraftDetailPage() {
                     <div className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
                         <div className="mb-5 flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-slate-950">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Cerrar pendiente
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -984,7 +1105,7 @@ export default function AircraftDetailPage() {
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
                                 Pendiente
                             </p>
-                            <h3 className="mt-2 text-base font-semibold text-slate-950">
+                            <h3 className="mt-2 text-base font-semibold text-slate-800">
                                 {selectedTask.title}
                             </h3>
                             {selectedTask.description && (
@@ -1042,7 +1163,7 @@ export default function AircraftDetailPage() {
                                 <button
                                     type="submit"
                                     disabled={isCompletingTask}
-                                    className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-500 disabled:opacity-70"
+                                    className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 font-medium text-white transition hover:bg-emerald-400 disabled:opacity-70"
                                 >
                                     {isCompletingTask
                                         ? "Guardando..."
@@ -1066,7 +1187,7 @@ export default function AircraftDetailPage() {
                     <div className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
                         <div className="mb-5 flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-slate-950">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Agregar pendiente
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -1154,7 +1275,7 @@ export default function AircraftDetailPage() {
                                 <button
                                     type="submit"
                                     disabled={isAddingPending}
-                                    className="flex-1 rounded-lg bg-amber-500 px-4 py-2 font-medium text-black transition hover:bg-amber-400 disabled:opacity-70"
+                                    className="flex-1 rounded-lg bg-amber-400 px-4 py-2 font-medium text-slate-800 transition hover:bg-amber-300 disabled:opacity-70"
                                 >
                                     {isAddingPending
                                         ? "Guardando..."
@@ -1178,7 +1299,7 @@ export default function AircraftDetailPage() {
                     <div className="relative z-10 w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
                         <div className="mb-5 flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-slate-950">
+                                <h2 className="text-xl font-semibold text-slate-800">
                                     Agregar observación
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
@@ -1247,7 +1368,7 @@ export default function AircraftDetailPage() {
                                 <button
                                     type="submit"
                                     disabled={isAddingObservation}
-                                    className="flex-1 rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white transition hover:bg-cyan-500 disabled:opacity-70"
+                                    className="flex-1 rounded-lg bg-cyan-500 px-4 py-2 font-medium text-white transition hover:bg-cyan-400 disabled:opacity-70"
                                 >
                                     {isAddingObservation
                                         ? "Guardando..."
@@ -1255,6 +1376,64 @@ export default function AircraftDetailPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {isReportModalOpen && reportData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button
+                        type="button"
+                        aria-label="Cerrar vista previa del reporte"
+                        onClick={() => setIsReportModalOpen(false)}
+                        className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
+                    />
+
+                    <div className="relative z-10 flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4">
+                            <div>
+                                <h2 className="text-xl font-semibold text-slate-800">
+                                    Vista previa del reporte
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Revisa el documento antes de descargarlo en PDF.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsReportModalOpen(false)}
+                                className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100"
+                                aria-label="Cerrar"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-6">
+                            <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 shadow-lg">
+                                <AircraftReportPreview reportData={reportData} />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 border-t border-slate-200 px-6 py-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsReportModalOpen(false)}
+                                className="flex-1 rounded-lg border border-slate-200 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50 sm:flex-none"
+                            >
+                                Cerrar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDownloadReport}
+                                disabled={isDownloadingReport}
+                                className="flex-1 rounded-lg bg-slate-700 px-4 py-2 font-medium text-white transition hover:bg-slate-600 disabled:opacity-70 sm:flex-none"
+                            >
+                                {isDownloadingReport
+                                    ? "Generando PDF..."
+                                    : "Descargar PDF"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

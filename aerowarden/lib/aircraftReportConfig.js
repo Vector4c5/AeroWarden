@@ -1,0 +1,27 @@
+/**
+ * Logo del reporte. Archivo en public/images/Logo_AeroWarden.png
+ */
+export const AIRCRAFT_REPORT_LOGO_SRC = "/images/Logo_AeroWarden.png";
+
+export const AIRCRAFT_REPORT_COLORS = {
+    primary: "#111111",
+    accent: "#1e293b",
+    border: "#000000",
+    headerBg: "#f1f5f9",
+    text: "#0f172a",
+    muted: "#475569",
+};
+
+export const AIRCRAFT_REPORT_LOGO = {
+    previewHeightClass: "h-14",
+    pdfWidth: 24,
+};
+
+export const AIRCRAFT_REPORT_TITLE = "REPORTE DE AERONAVE";
+
+export const AIRCRAFT_REPORT_SECTIONS = {
+    aircraftInfo: "INFORMACIÓN DE AERONAVE",
+    arrivalConditions: "CONDICIONES DE LLEGADA",
+    stayObservations: "OBSERVACIONES EN LA ESTANCIA",
+    tasks: "TRABAJOS Y PENDIENTES",
+};
