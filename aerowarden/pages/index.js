@@ -518,10 +518,20 @@ export default function Home() {
 
               <p className="max-w-3xl text-sm leading-relaxed text-slate-200 sm:text-lg md:text-xl lg:text-2xl">
 
-                Plataforma web para la gestión de hangares,
-                aeronaves y operaciones de mantenimiento aeronáutico.
+                <p className="mt-6 max-w-xl text-lg leading-8 text-slate-200 md:text-2xl">
+                  Plataforma web para la gestión de hangares,
+                  aeronaves y operaciones de mantenimiento aeronáutico.
+                </p>
+              </div>
 
-              </p>
+              {/* Imagen lateral */}
+              <div className="hidden md:flex max-w-md rounded-4xl shadow-2xl shadow-slate-950/20 overflow-hidden bg-white/5">
+                <img
+                  src="/ChatGPT%20Image%2011%20jun%202026,%2010_23_58%20p.m..png"
+                  alt="ChatGPT"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
 
             </div>
 
